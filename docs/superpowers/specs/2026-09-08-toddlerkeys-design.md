@@ -44,7 +44,7 @@ Main process owns kiosk state, close/quit guards, exit recognition, and window r
 - Show actual delivered printable characters, including shifted symbols. Show friendly labels/symbols for Space, Enter, Tab, Backspace, Escape, arrows, and modifiers. Never display `undefined` or raw browser event names.
 - Every distinct delivered keydown responds; OS autorepeat creates no additional bubble or sound. Multiple held keys remain representable. Do not promise events for hardware/system keys the OS withholds.
 - Target visible feedback within 100 ms on the tested Mac. Bound live bubbles to nine and decorative particles to 64. These are engineering defaults, not research-prescribed values.
-- Soft synthesized tones are optional, initially on at low app gain, with a parent mute/volume control. Maximum four concurrent voices and eight tone starts per second. No background music or queued speech. Software volume does not set the physical speaker's acoustic output.
+- Soft synthesized tones are optional, initially on at low app gain, with parent instrument, mute, and volume controls. Instrument choices are Marimba, Piano, Bells, and Soft Synth; changing the selection plays a short preview. Maximum four concurrent voices and eight tone starts per second. No background music or queued speech. Software volume does not set the physical speaker's acoustic output.
 - Reduced motion uses static glyph updates and gentle opacity changes. Avoid flashes and screen shake.
 - No points, streaks, failure states, surprise reward schedules, or calls to keep playing. Idle remains quiet.
 - Parent setup includes one co-play suggestion: “You pressed B. Can we find B on the keyboard?”

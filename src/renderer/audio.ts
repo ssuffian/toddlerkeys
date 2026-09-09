@@ -2,8 +2,13 @@ import type { PlayKey, Settings } from '../shared/contracts';
 
 const MAX_VOICES = 4;
 const MAX_STARTS_PER_SECOND = 8;
-const TONE_SECONDS = 0.27;
-export type Tone = { frequency: number; duration: number; gain: number };
+const PRESETS = {
+  marimba: { waveform: 'triangle', duration: 0.30, attack: 0.008, gain: 0.20, octave: 1 },
+  piano: { waveform: 'triangle', duration: 0.46, attack: 0.005, gain: 0.17, octave: 1 },
+  bells: { waveform: 'sine', duration: 0.62, attack: 0.003, gain: 0.13, octave: 2 },
+  softSynth: { waveform: 'square', duration: 0.22, attack: 0.018, gain: 0.08, octave: 0.5 },
+} as const satisfies Record<Settings['instrument'], { waveform: OscillatorType; duration: number; attack: number; gain: number; octave: number }>;
+export type Tone = { frequency: number; duration: number; attack: number; gain: number; waveform: OscillatorType };
 
 export class ToneScheduler {
   private starts: number[] = [];
@@ -16,10 +21,11 @@ export class ToneScheduler {
     this.starts = this.starts.filter(start => now - start < 1000);
     this.ends = this.ends.filter(end => end > now);
     if (this.stopped || key.phase !== 'down' || !settings.sound || settings.volume <= 0 || this.starts.length >= MAX_STARTS_PER_SECOND || this.ends.length >= MAX_VOICES) return null;
+    const preset = PRESETS[settings.instrument];
     this.starts.push(now);
-    this.ends.push(now + TONE_SECONDS * 1000);
+    this.ends.push(now + preset.duration * 1000);
     const scale = [261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25];
-    return { frequency: scale[key.colorIndex % scale.length], duration: TONE_SECONDS, gain: settings.volume };
+    return { frequency: scale[key.colorIndex % scale.length] * preset.octave, duration: preset.duration, attack: preset.attack, gain: settings.volume * preset.gain, waveform: preset.waveform };
   }
 
   start(): void { this.stopped = false; }
@@ -30,20 +36,19 @@ export class ToneScheduler {
 export interface Sound {
   accept(key: PlayKey): void;
   configure(settings: Settings): void;
-  unlock(): void;
+  unlock(): Promise<void>;
   stop(): void;
   dispose(): void;
 }
 
 export function createSound(): Sound {
   let context: AudioContext | undefined;
-  let settings: Settings = { sound: true, volume: 0.15, reducedMotion: false, lockdownMode: false };
+  let settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false };
   let scheduler = new ToneScheduler();
   const voices = new Set<OscillatorNode>();
 
   const ensureContext = () => {
     if (!context) context = new AudioContext({ latencyHint: 'interactive' });
-    if (context.state === 'suspended') void context.resume().catch(() => undefined);
     return context;
   };
   const stopVoices = () => {
@@ -52,7 +57,14 @@ export function createSound(): Sound {
   };
 
   return {
-    unlock() { if (settings.sound) { scheduler.start(); try { ensureContext(); } catch { /* sound remains optional */ } } },
+    async unlock() {
+      if (!settings.sound) return;
+      scheduler.start();
+      try {
+        const audio = ensureContext();
+        if (audio.state === 'suspended') await audio.resume();
+      } catch { /* sound remains optional */ }
+    },
     accept(key) {
       try {
         const audio = ensureContext();
@@ -64,10 +76,10 @@ export function createSound(): Sound {
         const start = audio.currentTime;
         const oscillator = audio.createOscillator();
         const gain = audio.createGain();
-        oscillator.type = key.category === 'control' ? 'sine' : 'triangle';
+        oscillator.type = tone.waveform;
         oscillator.frequency.setValueAtTime(tone.frequency, start);
         gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, tone.gain * 0.18), start + 0.012);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, tone.gain), start + tone.attack);
         gain.gain.exponentialRampToValueAtTime(0.0001, start + tone.duration);
         oscillator.connect(gain).connect(audio.destination);
         voices.add(oscillator);

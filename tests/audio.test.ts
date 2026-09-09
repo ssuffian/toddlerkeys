@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { PlayKey, Settings } from '../src/shared/contracts';
 import { ToneScheduler } from '../src/renderer/audio';
 
-const settings: Settings = { sound: true, volume: 0.15, reducedMotion: false, lockdownMode: false };
+const settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false };
 const event = (index: number, phase: PlayKey['phase'] = 'down'): PlayKey => ({ phase, code: `Key${index}`, label: 'A', category: 'letter', colorIndex: index % 8, at: index });
 
 describe('tone scheduler', () => {
@@ -18,11 +18,19 @@ describe('tone scheduler', () => {
     const scheduler = new ToneScheduler(() => now);
     expect(Array.from({ length: 5 }, (_, index) => scheduler.accept(event(index), settings)).filter(Boolean)).toHaveLength(4);
     expect(scheduler.activeVoices).toBe(4);
-    now = 300;
+    now = 700;
     expect(Array.from({ length: 5 }, (_, index) => scheduler.accept(event(index + 5), settings)).filter(Boolean)).toHaveLength(4);
     expect(scheduler.accept(event(20), settings)).toBeNull();
     now = 1001;
     expect(scheduler.accept(event(21), settings)).not.toBeNull();
+  });
+
+  it('gives each instrument a distinct synthesized tone', () => {
+    const tones = (['marimba', 'piano', 'bells', 'softSynth'] as const).map(instrument => {
+      const scheduler = new ToneScheduler(() => 0);
+      return scheduler.accept(event(1), { ...settings, instrument });
+    });
+    expect(new Set(tones.map(tone => `${tone?.waveform}:${tone?.duration}:${tone?.frequency}`)).size).toBe(4);
   });
 
   it('stop cancels scheduler state and rejects input until restarted', () => {

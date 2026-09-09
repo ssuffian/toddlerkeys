@@ -1,8 +1,9 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { Settings } from '../shared/contracts';
+import type { Instrument, Settings } from '../shared/contracts';
 
-export const defaultSettings = (reducedMotion = false): Settings => ({ sound: true, volume: 0.15, reducedMotion, lockdownMode: false });
+const instruments = new Set<Instrument>(['marimba', 'piano', 'bells', 'softSynth']);
+export const defaultSettings = (reducedMotion = false): Settings => ({ sound: true, volume: 0.15, instrument: 'marimba', reducedMotion, lockdownMode: false });
 
 export function sanitizeSettings(value: unknown, fallback: Settings): Settings {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...fallback };
@@ -11,6 +12,7 @@ export function sanitizeSettings(value: unknown, fallback: Settings): Settings {
   return {
     sound: candidate.sound,
     volume: Math.max(0, Math.min(1, candidate.volume)),
+    instrument: typeof candidate.instrument === 'string' && instruments.has(candidate.instrument as Instrument) ? candidate.instrument as Instrument : 'marimba',
     reducedMotion: candidate.reducedMotion,
     lockdownMode: typeof candidate.lockdownMode === 'boolean' ? candidate.lockdownMode : false,
   };

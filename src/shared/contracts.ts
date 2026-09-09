@@ -8,7 +8,8 @@ export type UnlockProgress = {
   phase: 'idle' | 'holding';
   holdProgress: number;
 };
-export type Settings = { sound: boolean; volume: number; reducedMotion: boolean; lockdownMode: boolean };
+export type Instrument = 'marimba' | 'piano' | 'bells' | 'softSynth';
+export type Settings = { sound: boolean; volume: number; instrument: Instrument; reducedMotion: boolean; lockdownMode: boolean };
 export type PlayKey = {
   phase: 'down' | 'up';
   code: string;

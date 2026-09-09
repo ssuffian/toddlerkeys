@@ -13,6 +13,7 @@ const progress = select<HTMLElement>('#progress');
 const holdMeter = select<HTMLElement>('#hold-meter');
 const playExitProgress = select<HTMLElement>('#play-exit-progress');
 const soundControl = select<HTMLInputElement>('#sound');
+const instrumentControl = select<HTMLSelectElement>('#instrument');
 const volumeControl = select<HTMLInputElement>('#volume');
 const volumeValue = select<HTMLOutputElement>('#volume-value');
 const motionControl = select<HTMLInputElement>('#motion');
@@ -25,7 +26,7 @@ let lastState: AppSnapshot['state'] | undefined;
 let renderedSettings = '';
 
 function readControls(): Settings {
-  return { sound: soundControl.checked, volume: Number(volumeControl.value), reducedMotion: motionControl.checked, lockdownMode: lockdownControl.checked };
+  return { sound: soundControl.checked, volume: Number(volumeControl.value), instrument: instrumentControl.value as Settings['instrument'], reducedMotion: motionControl.checked, lockdownMode: lockdownControl.checked };
 }
 
 function render(snapshot: AppSnapshot) {
@@ -50,6 +51,7 @@ function render(snapshot: AppSnapshot) {
   if (settingsKey !== renderedSettings) {
     renderedSettings = settingsKey;
     soundControl.checked = snapshot.settings.sound;
+    instrumentControl.value = snapshot.settings.instrument;
     volumeControl.value = String(snapshot.settings.volume);
     volumeValue.value = `${Math.round(snapshot.settings.volume * 100)}%`;
     motionControl.checked = snapshot.settings.reducedMotion;
@@ -59,7 +61,7 @@ function render(snapshot: AppSnapshot) {
   }
   if (lastState !== snapshot.state) {
     document.body.dataset.view = snapshot.state;
-    if (snapshot.state === 'playing') sound.unlock();
+    if (snapshot.state === 'playing') void sound.unlock();
     else { sound.stop(); scene.clear(); }
     lastState = snapshot.state;
   }
@@ -75,9 +77,15 @@ async function saveControls() {
 window.toddlerKeys.onSnapshot(render);
 window.toddlerKeys.onKey(key => { scene.accept(key); sound.accept(key); });
 void window.toddlerKeys.getSnapshot().then(render);
-start.addEventListener('click', () => { sound.unlock(); void window.toddlerKeys.start(); });
+start.addEventListener('click', () => { void sound.unlock(); void window.toddlerKeys.start(); });
 select<HTMLButtonElement>('#quit').addEventListener('click', () => { void window.toddlerKeys.quitFromSetup(); });
 soundControl.addEventListener('change', () => { sound.configure(readControls()); void saveControls(); });
+instrumentControl.addEventListener('change', async () => {
+  sound.configure(readControls());
+  await sound.unlock();
+  sound.accept({ phase: 'down', code: 'InstrumentPreview', label: '♪', category: 'symbol', colorIndex: 4, at: performance.now() });
+  void saveControls();
+});
 volumeControl.addEventListener('input', () => { volumeValue.value = `${Math.round(Number(volumeControl.value) * 100)}%`; sound.configure(readControls()); });
 volumeControl.addEventListener('change', () => { void saveControls(); });
 motionControl.addEventListener('change', () => { scene.setReducedMotion(motionControl.checked); void saveControls(); });
