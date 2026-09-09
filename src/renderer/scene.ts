@@ -36,7 +36,10 @@ export class SceneState {
     const choices = LETTER_PICTURES[letter];
     if (choices) {
       const choice = choices[Math.floor(this.random() * choices.length) % choices.length];
-      this.pictures.push({ id: ++this.sequence, letter, ...choice, slot: Math.floor(this.random() * 8) % 8, pressesLeft: PICTURE_PRESS_LIFETIME });
+      const occupiedSlots = new Set(this.pictures.map(picture => picture.slot));
+      const availableSlots = Array.from({ length: 8 }, (_, slot) => slot).filter(slot => !occupiedSlots.has(slot));
+      const slot = availableSlots[Math.floor(this.random() * availableSlots.length) % availableSlots.length];
+      this.pictures.push({ id: ++this.sequence, letter, ...choice, slot, pressesLeft: PICTURE_PRESS_LIFETIME });
       if (this.pictures.length > MAX_PICTURES) this.pictures.splice(0, this.pictures.length - MAX_PICTURES);
     }
 

@@ -70,4 +70,11 @@ describe('scene state', () => {
     for (let index = 0; index < 20; index += 1) state.accept({ ...event(index), code: 'KeyB', label: 'B', category: 'letter' });
     expect(state.pictures.length).toBeLessThanOrEqual(MAX_PICTURES);
   });
+
+  it('never places two visible pictures in the same slot', () => {
+    const state = new SceneState(() => 0, () => 0);
+    for (const letter of ['A', 'B', 'C', 'D']) state.accept({ ...event(1), code: `Key${letter}`, label: letter, category: 'letter' });
+    const slots = state.pictures.map(picture => picture.slot);
+    expect(new Set(slots).size).toBe(slots.length);
+  });
 });
