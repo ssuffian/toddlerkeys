@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>Toddler Keys</title>
+  </head>
+  <body>
+    <main id="app">
+      <section id="setup" class="setup-view" aria-labelledby="app-title">
+        <div class="setup-copy">
+          <p class="eyebrow">A little space to explore</p>
+          <h1 id="app-title">Toddler<br><span>Keys</span></h1>
+          <p class="intro">Big keys, gentle sounds, and a moment to play together.</p>
+          <p class="co-play">Try saying: “You pressed B. Can we find B on the keyboard?”</p>
+        </div>
+        <div class="setup-panel">
+          <div class="practice-card">
+            <p class="step">Parent exit practice</p>
+            <h2>Try the secret exit once</h2>
+            <p>Hold these keys for three seconds:</p>
+            <div class="key-chord" aria-label="Command plus Option plus K">
+              <kbd>⌘</kbd><span>+</span><kbd>⌥</kbd><span>+</span><kbd>K</kbd>
+            </div>
+            <p><strong>Command + Option + K</strong>. Keep holding until the app confirms it.</p>
+            <p id="progress" class="practice-progress" role="status">Try the sequence now.</p>
+          </div>
+          <fieldset class="preferences">
+            <legend>Play settings</legend>
+            <label class="toggle-row"><span><strong>Gentle sounds</strong><small>Short tones, no music</small></span><input id="sound" type="checkbox"><i aria-hidden="true"></i></label>
+            <label class="volume-row" for="volume"><span>Volume</span><input id="volume" type="range" min="0" max="1" step="0.05"><output id="volume-value" for="volume">15%</output></label>
+            <label class="toggle-row"><span><strong>Reduce motion</strong><small>Keep everything calm and still</small></span><input id="motion" type="checkbox"><i aria-hidden="true"></i></label>
+            <label class="toggle-row"><span><strong>Lockdown mode</strong><small>Disable the Escape key exit</small></span><input id="lockdown" type="checkbox"><i aria-hidden="true"></i></label>
+          </fieldset>
+          <div class="actions">
+            <button id="start" disabled><span>Start playing</span><b aria-hidden="true">→</b></button>
+            <button id="quit" class="quiet-button">Quit</button>
+          </div>
+          <p id="settings-status" class="save-status" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+      <section id="play" class="play-view" hidden aria-label="Keyboard play space">
+        <div class="ambient-shape shape-one" aria-hidden="true"></div>
+        <div class="ambient-shape shape-two" aria-hidden="true"></div>
+        <div class="ambient-shape shape-three" aria-hidden="true"></div>
+        <div id="scene" class="scene"></div>
+        <p class="play-hint" aria-hidden="true">Press any key</p>
+      </section>
+      <section id="recovering" class="recovery-view" hidden>
+        <div class="recovery-mark" aria-hidden="true">✦</div>
+        <h1>A quiet moment</h1>
+        <p>Restoring play. A parent can still use the exit sequence.</p>
+      </section>
+    </main>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

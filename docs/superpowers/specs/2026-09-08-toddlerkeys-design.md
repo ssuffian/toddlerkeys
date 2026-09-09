@@ -1,6 +1,6 @@
 # Toddler Keys proposed design
 
-Status: proposed design accompanying the requested plan; no application code has been built or kiosk guarantees verified. The workspace was empty and is not a Git repository. Platform assumption: macOS first, pending the user's answer.
+Status: design approved for implementation on 2026-09-08. Initial platform: macOS. Implementation and verification status are tracked in `docs/implementation-progress.md`; this design is not a claim that kiosk acceptance has passed.
 
 ## Product
 
@@ -18,10 +18,10 @@ Electron currently applies AppKit presentation restrictions for kiosk mode, incl
 
 ## Parent and child flows
 
-1. Launch to a normal parent setup window with sound, volume, and reduced-motion controls. Show the exit sequence and require one successful practice before enabling Start on that launch.
+1. Launch to a normal parent setup window with sound, volume, reduced-motion, and Lockdown mode controls. Lockdown defaults off. Show the parent exit sequence and require one successful practice before enabling Start on that launch.
 2. Start enters kiosk on the primary display. Secondary displays get noninteractive covering windows; display changes refresh coverage. This behavior is a release gate, not an assumed consequence of one fullscreen window.
 3. The play screen has no exit/settings buttons, links, menus, text inputs, or dialogs. Pointer clicks may make a small ripple but never navigate or alter settings.
-4. Proposed exit: hold **Command + Option + Shift + K for three seconds**, release all keys, then type **PARENT** within five seconds. Case is ignored. Wrong input, extra keys during the hold, early release, or timeout resets the attempt. Key autorepeat never advances the sequence. This is a toddler barrier, not authentication against an adult.
+4. Exit: when Lockdown mode is off, **Escape** returns immediately to setup. Hold **Command + Option + K for three seconds** in either mode. Successful completion returns immediately to setup. Any extra key or modifier, an early release, or an input discontinuity resets the chord attempt. Key autorepeat never advances the sequence. This is a toddler barrier, not authentication against an adult.
 5. Successful exit stops audio and animation, removes display covers, restores normal window behavior, and returns to parent setup, where Quit is available.
 
 The final chord is subject to real-keyboard testing. Physical keyboard rollover can limit what simultaneous keys the OS receives.

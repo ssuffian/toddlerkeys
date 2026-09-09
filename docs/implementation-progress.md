@@ -10,6 +10,17 @@ User approved implementation on 2026-09-08, including direct delegation to Sol.
 - Build and validate all software that can be tested here. Hardware gestures, sleep, and display changes requiring physical access remain explicit manual acceptance items. Do not describe automated event injection as proof of OS containment. This avoids blocking reversible implementation on unavailable physical actions while preserving the release claim boundary.
 - Foundation tasks 1/2 share lifecycle/window ownership and are one Astra implementation batch, reviewed before Sol renderer integration.
 - Keep runtime app assets offline. Development tooling may fetch dependencies.
+- 2026-09-09: User requested continuation and authorized Sol for remaining implementation. Astra worker hit a usage limit after writing the foundation; Sol resumes those files. Review findings and physical acceptance limits remain binding.
+- 2026-09-09: User simplified the parent exit to holding Command + Option + K for three seconds. The typed PARENT suffix and Shift modifier were removed throughout the implementation and acceptance checks.
+- 2026-09-09: After the first real kiosk trial was difficult to exit, Lockdown mode was added as an opt-in setting and defaults off. Escape exits play immediately while Lockdown is off. The parent chord remains available in both modes.
+- Rapid-key response fix: ordinary play keys no longer publish redundant full session snapshots, Electron's autorepeat flag replaces fragile permanent held-key suppression, and a repeated physical key clears any missed visual release state.
+
+## Initial foundation review
+
+- Native kiosk owner survives renderer replacement through WebContentsView; this is preferable to destroying the kiosk BrowserWindow on each failure.
+- Main process checks sender/frame and session state before start/settings/quit operations. The guarded `quitFromSetup` bridge is allowed; it is not an unrestricted quit method.
+- Initial review findings were addressed: native reduced-motion lookup and powerMonitor typing, parent-input suppression, default volume, and persisted preferences.
+- Initial `npm run typecheck` failed on the two API typing issues above. No runtime checks have been claimed from this initial review.
 
 ## Preflight
 

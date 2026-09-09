@@ -108,8 +108,8 @@ export interface UnlockRecognizer {
 export function createUnlockRecognizer(): UnlockRecognizer;
 ```
 
-- [ ] Write failing tests for a three-second Command/Option/Shift/K hold, release-all requirement, and fresh P/A/R/E/N/T keydowns within five seconds. A repeated letter keydown cannot advance the code. A successful practice uses the same recognizer but never changes kiosk state.
-- [ ] Add cases for early release, extra keys, repeated keydown, incorrect sequence, timeout, stale key state after blur/sleep/disconnect, and a correct sequence entered while recovery is active.
+- [ ] Write failing tests for a three-second Command/Option/K hold that completes immediately. A successful practice uses the same recognizer but never changes kiosk state.
+- [ ] Add cases for early release, extra keys or modifiers, repeated keydown, stale key state after blur/sleep/disconnect, and a correct sequence entered while recovery is active.
 - [ ] Implement the recognizer as a deterministic state machine driven by main-process monotonic time. Use a main timer for the hold; do not depend on autorepeat or renderer animation frames. Reset incomplete attempts on focus/device/session discontinuities.
 - [ ] Implement setup → playing after practice, and playing/recovering → setup only after successful unlock. Block window close and ordinary app quit during the session. Remove guards and covers during intentional parent exit.
 - [ ] Recover crashed renderer windows without exposing a usable desktop. For an unresponsive renderer, attempt one bounded replacement and show a protected recovery view if unsuccessful. Validate keyboard routing into replacement windows; main-process ownership alone does not prove input survives a hung renderer.
