@@ -24,6 +24,7 @@
               <kbd>⌘</kbd><span>+</span><kbd>⌥</kbd><span>+</span><kbd>K</kbd>
             </div>
             <p><strong>Command + Option + K</strong>. Keep holding until the app confirms it.</p>
+            <div id="hold-meter" class="hold-meter" role="progressbar" aria-label="Exit key hold progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
             <p id="progress" class="practice-progress" role="status">Try the sequence now.</p>
           </div>
           <fieldset class="preferences">
@@ -45,6 +46,9 @@
         <div class="ambient-shape shape-two" aria-hidden="true"></div>
         <div class="ambient-shape shape-three" aria-hidden="true"></div>
         <div id="scene" class="scene"></div>
+        <div id="play-exit-progress" class="play-exit-progress" hidden aria-live="polite">
+          <span>Parent exit — keep holding</span><i><b></b></i>
+        </div>
         <p class="play-hint" aria-hidden="true">Press any key</p>
       </section>
       <section id="recovering" class="recovery-view" hidden>

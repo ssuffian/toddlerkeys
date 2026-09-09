@@ -30,6 +30,9 @@ button, input { font: inherit; }
 .key-chord span { color: #a49a8c; }
 .practice-progress { min-height: 24px; margin-bottom: 0 !important; color: #247460 !important; font-weight: 750; }
 .practice-progress[data-phase="holding"] { color: #c16b43 !important; }
+.hold-meter { width: 100%; height: 10px; margin: 15px 0 5px; overflow: hidden; border-radius: 99px; background: #e6dfd3; }
+.hold-meter i { display: block; width: var(--hold-progress, 0%); height: 100%; border-radius: inherit; background: #d66d4a; transition: width 80ms linear; }
+.hold-meter.active { box-shadow: 0 0 0 4px rgba(214, 109, 74, .11); }
 .preferences { margin: 18px 0 0; padding: 0; border: 0; }
 .preferences legend { margin-bottom: 5px; color: #8a7e70; font-size: 12px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
 .toggle-row, .volume-row { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #294849; font-size: 14px; }
@@ -71,6 +74,9 @@ button:focus-visible { outline: 3px solid rgba(214, 109, 74, .55); outline-offse
 .color-4 { background: #637fbb; } .color-5 { background: #9976b5; } .color-6 { background: #c96682; } .color-7 { background: #769b58; }
 .key-announcer { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .play-hint { position: absolute; right: 0; bottom: clamp(22px, 4vh, 48px); left: 0; margin: 0; color: rgba(47, 73, 70, .45); font-size: clamp(14px, 1.6vw, 19px); font-weight: 650; letter-spacing: .11em; text-align: center; text-transform: uppercase; }
+.play-exit-progress { position: absolute; z-index: 20; top: 28px; left: 50%; width: min(360px, calc(100vw - 40px)); padding: 13px 16px; transform: translateX(-50%); border: 1px solid rgba(31, 76, 72, .12); border-radius: 15px; background: rgba(255, 253, 247, .94); box-shadow: 0 12px 32px rgba(43, 62, 55, .13); color: #294849; font-size: 14px; font-weight: 750; text-align: center; }
+.play-exit-progress > i { display: block; height: 7px; margin-top: 9px; overflow: hidden; border-radius: 99px; background: #e6dfd3; }
+.play-exit-progress b { display: block; width: var(--hold-progress, 0%); height: 100%; border-radius: inherit; background: #d66d4a; transition: width 80ms linear; }
 .pointer-ripple { position: absolute; width: 12px; height: 12px; margin: -6px; border: 2px solid rgba(65, 120, 109, .55); border-radius: 50%; pointer-events: none; animation: ripple .55s ease-out forwards; }
 @keyframes ripple { to { transform: scale(5); opacity: 0; } }
 .reduced-motion .key-bubble.newest { animation: none; }

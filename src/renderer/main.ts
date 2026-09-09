@@ -10,6 +10,8 @@ const recovering = select<HTMLElement>('#recovering');
 const sceneRoot = select<HTMLElement>('#scene');
 const start = select<HTMLButtonElement>('#start');
 const progress = select<HTMLElement>('#progress');
+const holdMeter = select<HTMLElement>('#hold-meter');
+const playExitProgress = select<HTMLElement>('#play-exit-progress');
 const soundControl = select<HTMLInputElement>('#sound');
 const volumeControl = select<HTMLInputElement>('#volume');
 const volumeValue = select<HTMLOutputElement>('#volume-value');
@@ -34,6 +36,12 @@ function render(snapshot: AppSnapshot) {
   start.disabled = !snapshot.practiced;
   const unlock = snapshot.unlock;
   progress.dataset.phase = unlock.phase;
+  const holdPercent = Math.round(unlock.holdProgress * 100);
+  holdMeter.style.setProperty('--hold-progress', `${holdPercent}%`);
+  holdMeter.setAttribute('aria-valuenow', String(holdPercent));
+  holdMeter.classList.toggle('active', unlock.phase === 'holding');
+  playExitProgress.hidden = snapshot.state !== 'playing' || unlock.phase !== 'holding';
+  playExitProgress.style.setProperty('--hold-progress', `${holdPercent}%`);
   progress.textContent = unlock.phase === 'holding'
     ? `Keep holding… ${Math.max(1, Math.ceil((1 - unlock.holdProgress) * 3))}`
     : snapshot.practiced ? 'Practice complete. You’re ready.' : 'Try the sequence now.';

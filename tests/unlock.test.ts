@@ -17,12 +17,31 @@ describe('parent unlock recognizer', () => {
     expect(unlock.progress()).toEqual({ phase: 'idle', holdProgress: 0 });
   });
 
+  it('arms from the K event modifier flags without separate modifier events', () => {
+    const unlock = createUnlockRecognizer();
+    unlock.input(key({ type: 'down', code: 'KeyK', key: 'k', meta: true, alt: true, at: 100 }));
+    expect(unlock.progress().phase).toBe('holding');
+    unlock.tick(1600);
+    expect(unlock.progress().holdProgress).toBeCloseTo(0.5);
+    expect(unlock.tick(3100)).toBe(true);
+  });
+
   it('does not complete before the full hold duration', () => {
     const unlock = beginChord();
     expect(unlock.tick(2999)).toBe(false);
     expect(unlock.progress().phase).toBe('holding');
     unlock.input(key({ type: 'up', code: 'KeyK', key: 'k', meta: true, alt: true, at: 2999 }));
     expect(unlock.progress().phase).toBe('idle');
+  });
+
+  it('cancels when K or either modifier is released', () => {
+    const releaseK = beginChord();
+    releaseK.input(key({ type: 'up', code: 'KeyK', key: 'k', meta: true, alt: true, at: 1000 }));
+    expect(releaseK.tick(3000)).toBe(false);
+
+    const releaseOption = beginChord();
+    releaseOption.input(key({ type: 'up', code: 'AltLeft', key: 'Alt', meta: true, alt: false, at: 1000 }));
+    expect(releaseOption.tick(3000)).toBe(false);
   });
 
   it('cancels when any extra key or modifier is pressed', () => {

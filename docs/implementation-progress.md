@@ -14,6 +14,7 @@ User approved implementation on 2026-09-08, including direct delegation to Sol.
 - 2026-09-09: User simplified the parent exit to holding Command + Option + K for three seconds. The typed PARENT suffix and Shift modifier were removed throughout the implementation and acceptance checks.
 - 2026-09-09: After the first real kiosk trial was difficult to exit, Lockdown mode was added as an opt-in setting and defaults off. Escape exits play immediately while Lockdown is off. The parent chord remains available in both modes.
 - Rapid-key response fix: ordinary play keys no longer publish redundant full session snapshots, Electron's autorepeat flag replaces fragile permanent held-key suppression, and a repeated physical key clears any missed visual release state.
+- Parent-chord pickup fix: recognition now begins from K's Command/Option modifier flags instead of requiring separate modifier key-down events from Electron. The setup screen shows a live progress bar and countdown throughout the three-second hold.
 
 ## Initial foundation review
 

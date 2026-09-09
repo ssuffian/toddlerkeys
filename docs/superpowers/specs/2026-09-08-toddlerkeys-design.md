@@ -22,6 +22,7 @@ Electron currently applies AppKit presentation restrictions for kiosk mode, incl
 2. Start enters kiosk on the primary display. Secondary displays get noninteractive covering windows; display changes refresh coverage. This behavior is a release gate, not an assumed consequence of one fullscreen window.
 3. The play screen has no exit/settings buttons, links, menus, text inputs, or dialogs. Pointer clicks may make a small ripple but never navigate or alter settings.
 4. Exit: when Lockdown mode is off, **Escape** returns immediately to setup. Hold **Command + Option + K for three seconds** in either mode. Successful completion returns immediately to setup. Any extra key or modifier, an early release, or an input discontinuity resets the chord attempt. Key autorepeat never advances the sequence. This is a toddler barrier, not authentication against an adult.
+   The parent setup screen displays a live progress bar and countdown during the hold. Recognition starts from K's modifier flags so it remains reliable when macOS/Electron does not deliver separate modifier key-down events to the window.
 5. Successful exit stops audio and animation, removes display covers, restores normal window behavior, and returns to parent setup, where Quit is available.
 
 The final chord is subject to real-keyboard testing. Physical keyboard rollover can limit what simultaneous keys the OS receives.
