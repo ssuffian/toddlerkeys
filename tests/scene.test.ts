@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlayKey } from '../src/shared/contracts';
-import { MAX_BUBBLES, MAX_PARTICLES, MAX_PICTURES, PICTURE_PRESS_LIFETIME, SceneState } from '../src/renderer/scene';
+import { MAX_BUBBLES, MAX_PARTICLES, MAX_PICTURES, PICTURE_MS, SceneState } from '../src/renderer/scene';
 import { LETTER_PICTURES } from '../src/renderer/letter-pictures';
 
 const event = (index: number, phase: PlayKey['phase'] = 'down'): PlayKey => ({
@@ -57,11 +57,16 @@ describe('scene state', () => {
     expect(state.particles).toHaveLength(0);
   });
 
-  it('shows a random picture for each letter and retires it after a few presses', () => {
-    const state = new SceneState(() => 0, () => 0);
+  it('shows a random picture for each letter and retires it after two seconds', () => {
+    let now = 0;
+    const state = new SceneState(() => now, () => 0);
     state.accept({ ...event(1), code: 'KeyA', label: 'a', category: 'letter' });
-    expect(state.pictures[0]).toMatchObject({ letter: 'A', icon: '🍎', word: 'Apple', slot: 0, pressesLeft: PICTURE_PRESS_LIFETIME });
-    for (let index = 0; index < PICTURE_PRESS_LIFETIME; index += 1) state.accept(event(index));
+    expect(state.pictures[0]).toMatchObject({ letter: 'A', icon: '🍎', word: 'Apple', slot: 0, expiresAt: PICTURE_MS });
+    now = PICTURE_MS - 1;
+    state.sweep();
+    expect(state.pictures).toHaveLength(1);
+    now = PICTURE_MS;
+    state.sweep();
     expect(state.pictures).toHaveLength(0);
   });
 

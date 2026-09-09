@@ -4,13 +4,13 @@ import { LETTER_PICTURES } from './letter-pictures';
 export const MAX_BUBBLES = 9;
 export const MAX_PARTICLES = 64;
 export const MAX_PICTURES = 4;
-export const PICTURE_PRESS_LIFETIME = 4;
+export const PICTURE_MS = 2000;
 const TRAIL_MS = 1800;
 const PARTICLE_MS = 720;
 
 export type SceneBubble = PlayKey & { id: number; bornAt: number; expiresAt: number; held: boolean };
 export type SceneParticle = { id: number; colorIndex: number; bornAt: number; expiresAt: number; angle: number; distance: number };
-export type ScenePicture = { id: number; letter: string; icon: string; word: string; slot: number; pressesLeft: number };
+export type ScenePicture = { id: number; letter: string; icon: string; word: string; slot: number; bornAt: number; expiresAt: number };
 
 export class SceneState {
   bubbles: SceneBubble[] = [];
@@ -31,7 +31,6 @@ export class SceneState {
       return;
     }
 
-    this.pictures = this.pictures.map(picture => ({ ...picture, pressesLeft: picture.pressesLeft - 1 })).filter(picture => picture.pressesLeft > 0);
     const letter = key.label.length === 1 ? key.label.toUpperCase() : '';
     const choices = LETTER_PICTURES[letter];
     if (choices) {
@@ -39,7 +38,7 @@ export class SceneState {
       const occupiedSlots = new Set(this.pictures.map(picture => picture.slot));
       const availableSlots = Array.from({ length: 8 }, (_, slot) => slot).filter(slot => !occupiedSlots.has(slot));
       const slot = availableSlots[Math.floor(this.random() * availableSlots.length) % availableSlots.length];
-      this.pictures.push({ id: ++this.sequence, letter, ...choice, slot, pressesLeft: PICTURE_PRESS_LIFETIME });
+      this.pictures.push({ id: ++this.sequence, letter, ...choice, slot, bornAt: now, expiresAt: now + PICTURE_MS });
       if (this.pictures.length > MAX_PICTURES) this.pictures.splice(0, this.pictures.length - MAX_PICTURES);
     }
 
@@ -68,10 +67,11 @@ export class SceneState {
   sweep(now = this.now()): void {
     this.bubbles = this.bubbles.filter(bubble => bubble.expiresAt > now);
     this.particles = this.particles.filter(particle => particle.expiresAt > now);
+    this.pictures = this.pictures.filter(picture => picture.expiresAt > now);
   }
 
   get animating(): boolean {
-    return this.particles.length > 0 || this.bubbles.some(bubble => Number.isFinite(bubble.expiresAt));
+    return this.particles.length > 0 || this.pictures.length > 0 || this.bubbles.some(bubble => Number.isFinite(bubble.expiresAt));
   }
 
   clear(): void { this.bubbles = []; this.particles = []; this.pictures = []; this.held.clear(); }
@@ -119,7 +119,7 @@ export function createScene(root: HTMLElement): Scene {
         pictureElements.set(picture.id, element);
         pictureLayer.append(element);
       }
-      element.style.opacity = String(Math.min(1, 0.42 + picture.pressesLeft * 0.15));
+      element.style.opacity = String(Math.min(1, Math.max(0, (picture.expiresAt - now) / 400)));
     });
     const latestId = state.bubbles.at(-1)?.id;
     const bubbleIds = new Set(state.bubbles.map(bubble => bubble.id));
