@@ -1,19 +1,24 @@
 import type { PlayKey } from '../shared/contracts';
+import { LETTER_PICTURES } from './letter-pictures';
 
 export const MAX_BUBBLES = 9;
 export const MAX_PARTICLES = 64;
+export const MAX_PICTURES = 4;
+export const PICTURE_PRESS_LIFETIME = 4;
 const TRAIL_MS = 1800;
 const PARTICLE_MS = 720;
 
 export type SceneBubble = PlayKey & { id: number; bornAt: number; expiresAt: number; held: boolean };
 export type SceneParticle = { id: number; colorIndex: number; bornAt: number; expiresAt: number; angle: number; distance: number };
+export type ScenePicture = { id: number; letter: string; icon: string; word: string; slot: number; pressesLeft: number };
 
 export class SceneState {
   bubbles: SceneBubble[] = [];
   particles: SceneParticle[] = [];
+  pictures: ScenePicture[] = [];
   private sequence = 0;
   private held = new Map<string, number>();
-  constructor(private readonly now: () => number = () => performance.now()) {}
+  constructor(private readonly now: () => number = () => performance.now(), private readonly random: () => number = Math.random) {}
 
   accept(key: PlayKey, reducedMotion = false): void {
     const now = this.now();
@@ -24,6 +29,15 @@ export class SceneState {
       if (bubble) bubble.held = false;
       this.held.delete(key.code);
       return;
+    }
+
+    this.pictures = this.pictures.map(picture => ({ ...picture, pressesLeft: picture.pressesLeft - 1 })).filter(picture => picture.pressesLeft > 0);
+    const letter = key.label.length === 1 ? key.label.toUpperCase() : '';
+    const choices = LETTER_PICTURES[letter];
+    if (choices) {
+      const choice = choices[Math.floor(this.random() * choices.length) % choices.length];
+      this.pictures.push({ id: ++this.sequence, letter, ...choice, slot: Math.floor(this.random() * 8) % 8, pressesLeft: PICTURE_PRESS_LIFETIME });
+      if (this.pictures.length > MAX_PICTURES) this.pictures.splice(0, this.pictures.length - MAX_PICTURES);
     }
 
     const previousForCode = this.held.get(key.code);
@@ -57,7 +71,7 @@ export class SceneState {
     return this.particles.length > 0 || this.bubbles.some(bubble => Number.isFinite(bubble.expiresAt));
   }
 
-  clear(): void { this.bubbles = []; this.particles = []; this.held.clear(); }
+  clear(): void { this.bubbles = []; this.particles = []; this.pictures = []; this.held.clear(); }
 }
 
 export interface Scene {
@@ -72,15 +86,38 @@ export function createScene(root: HTMLElement): Scene {
   let reducedMotion = false;
   let frame = 0;
   let disposed = false;
-  root.innerHTML = '<div class="scene-glow" aria-hidden="true"></div><div class="bubble-layer"></div><div class="particle-layer" aria-hidden="true"></div><p class="key-announcer" aria-live="polite" aria-atomic="true"></p>';
+  root.innerHTML = '<div class="scene-glow" aria-hidden="true"></div><div class="picture-layer"></div><div class="bubble-layer"></div><div class="particle-layer" aria-hidden="true"></div><p class="key-announcer" aria-live="polite" aria-atomic="true"></p>';
+  const pictureLayer = root.querySelector<HTMLElement>('.picture-layer')!;
   const bubbleLayer = root.querySelector<HTMLElement>('.bubble-layer')!;
   const particleLayer = root.querySelector<HTMLElement>('.particle-layer')!;
   const announcer = root.querySelector<HTMLElement>('.key-announcer')!;
   const bubbleElements = new Map<number, HTMLElement>();
   const particleElements = new Map<number, HTMLElement>();
+  const pictureElements = new Map<number, HTMLElement>();
 
   const render = (now = performance.now()) => {
     state.sweep(now);
+    const pictureIds = new Set(state.pictures.map(picture => picture.id));
+    for (const [id, element] of pictureElements) if (!pictureIds.has(id)) { element.remove(); pictureElements.delete(id); }
+    state.pictures.forEach(picture => {
+      let element = pictureElements.get(picture.id);
+      if (!element) {
+        element = document.createElement('div');
+        element.className = `letter-picture picture-slot-${picture.slot}`;
+        element.setAttribute('role', 'img');
+        element.setAttribute('aria-label', `${picture.letter} is for ${picture.word}`);
+        const icon = document.createElement('span');
+        icon.className = 'picture-icon';
+        icon.textContent = picture.icon;
+        const caption = document.createElement('span');
+        caption.className = 'picture-caption';
+        caption.textContent = picture.word;
+        element.append(icon, caption);
+        pictureElements.set(picture.id, element);
+        pictureLayer.append(element);
+      }
+      element.style.opacity = String(Math.min(1, 0.42 + picture.pressesLeft * 0.15));
+    });
     const latestId = state.bubbles.at(-1)?.id;
     const bubbleIds = new Set(state.bubbles.map(bubble => bubble.id));
     for (const [id, element] of bubbleElements) if (!bubbleIds.has(id)) { element.remove(); bubbleElements.delete(id); }
@@ -96,7 +133,7 @@ export function createScene(root: HTMLElement): Scene {
         bubbleLayer.append(element);
       }
       const latest = bubble.id === latestId;
-      element.className = `key-bubble color-${bubble.colorIndex}${latest ? ' newest' : ' trail'}${bubble.held ? ' held' : ''}`;
+      element.className = `key-bubble color-${bubble.colorIndex} category-${bubble.category}${latest ? ' newest' : ' trail'}${bubble.held ? ' held' : ''}`;
       element.dataset.code = bubble.code;
       const trailIndex = state.bubbles.length - 1 - index;
       if (!latest) {
@@ -149,7 +186,7 @@ export function createScene(root: HTMLElement): Scene {
       if (enabled) state.particles = [];
       render();
     },
-    clear() { state.clear(); bubbleLayer.replaceChildren(); particleLayer.replaceChildren(); bubbleElements.clear(); particleElements.clear(); announcer.textContent = ''; },
-    dispose() { disposed = true; if (frame) cancelAnimationFrame(frame); state.clear(); bubbleElements.clear(); particleElements.clear(); root.replaceChildren(); },
+    clear() { state.clear(); pictureLayer.replaceChildren(); bubbleLayer.replaceChildren(); particleLayer.replaceChildren(); pictureElements.clear(); bubbleElements.clear(); particleElements.clear(); announcer.textContent = ''; },
+    dispose() { disposed = true; if (frame) cancelAnimationFrame(frame); state.clear(); pictureElements.clear(); bubbleElements.clear(); particleElements.clear(); root.replaceChildren(); },
   };
 }

@@ -16,6 +16,7 @@ User approved implementation on 2026-09-08, including direct delegation to Sol.
 - Rapid-key response fix: ordinary play keys no longer publish redundant full session snapshots, Electron's autorepeat flag replaces fragile permanent held-key suppression, and a repeated physical key clears any missed visual release state.
 - Parent-chord pickup fix: recognition now begins from K's Command/Option modifier flags instead of requiring separate modifier key-down events from Electron. The setup screen shows a live progress bar and countdown throughout the three-second hold.
 - Added a persistent instrument picker with locally synthesized Marimba, Piano, Bells, and Soft Synth presets. Selection changes play a short preview; no external audio assets or network source are used.
+- Added five picture-and-word associations for every letter. A random choice appears around the play area and remains visible across several keypresses.
 
 ## Initial foundation review
 
