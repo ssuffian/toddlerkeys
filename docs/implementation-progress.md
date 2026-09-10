@@ -11,10 +11,10 @@ User approved implementation on 2026-09-08, including direct delegation to Sol.
 - Foundation tasks 1/2 share lifecycle/window ownership and are one Astra implementation batch, reviewed before Sol renderer integration.
 - Keep runtime app assets offline. Development tooling may fetch dependencies.
 - 2026-09-09: User requested continuation and authorized Sol for remaining implementation. Astra worker hit a usage limit after writing the foundation; Sol resumes those files. Review findings and physical acceptance limits remain binding.
-- 2026-09-09: User simplified the parent exit to holding Command + Option + K, later tuned to a two-second hold. The typed PARENT suffix and Shift modifier were removed throughout the implementation and acceptance checks.
+- 2026-09-09: User simplified the parent exit to a held modifier chord, later tuned to a two-second hold. On 2026-09-10 it became the platform-neutral Control + Shift + K. The typed PARENT suffix was removed throughout the implementation and acceptance checks.
 - 2026-09-09: After the first real kiosk trial was difficult to exit, Lockdown mode was added as an opt-in setting and defaults off. Escape exits play immediately while Lockdown is off. The parent chord remains available in both modes.
 - Rapid-key response fix: ordinary play keys no longer publish redundant full session snapshots, Electron's autorepeat flag replaces fragile permanent held-key suppression, and a repeated physical key clears any missed visual release state.
-- Parent-chord pickup fix: recognition now begins from K's Command/Option modifier flags instead of requiring separate modifier key-down events from Electron. The setup screen shows a live progress bar and countdown throughout the three-second hold.
+- Parent-chord pickup fix: recognition begins from K's Control/Shift modifier flags instead of requiring separate modifier key-down events from Electron. The setup screen shows a live progress bar and countdown throughout the two-second hold.
 - Added a persistent instrument picker with locally synthesized Marimba, Piano, Bells, and Soft Synth presets. Selection changes play a short preview; no external audio assets or network source are used.
 - Added five picture-and-word associations for every letter. A random choice appears around the play area for two seconds.
 

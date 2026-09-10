@@ -4,14 +4,14 @@ import { enterChord, key } from './helpers';
 
 function beginChord(at = 0) {
   const unlock = createUnlockRecognizer();
-  unlock.input(key({ type: 'down', code: 'MetaLeft', key: 'Meta', meta: true, at }));
-  unlock.input(key({ type: 'down', code: 'AltLeft', key: 'Alt', meta: true, alt: true, at }));
-  unlock.input(key({ type: 'down', code: 'KeyK', key: 'k', meta: true, alt: true, at }));
+  unlock.input(key({ type: 'down', code: 'ControlLeft', key: 'Control', control: true, at }));
+  unlock.input(key({ type: 'down', code: 'ShiftLeft', key: 'Shift', control: true, shift: true, at }));
+  unlock.input(key({ type: 'down', code: 'KeyK', key: 'k', control: true, shift: true, at }));
   return unlock;
 }
 
 describe('parent unlock recognizer', () => {
-  it('completes after Command + Option + K is held for two seconds', () => {
+  it('completes after Control + Shift + K is held for two seconds', () => {
     const unlock = createUnlockRecognizer();
     expect(enterChord(unlock)).toBe(true);
     expect(unlock.progress()).toEqual({ phase: 'idle', holdProgress: 0 });
@@ -19,7 +19,7 @@ describe('parent unlock recognizer', () => {
 
   it('arms from the K event modifier flags without separate modifier events', () => {
     const unlock = createUnlockRecognizer();
-    unlock.input(key({ type: 'down', code: 'KeyK', key: 'k', meta: true, alt: true, at: 100 }));
+    unlock.input(key({ type: 'down', code: 'KeyK', key: 'k', control: true, shift: true, at: 100 }));
     expect(unlock.progress().phase).toBe('holding');
     unlock.tick(1100);
     expect(unlock.progress().holdProgress).toBeCloseTo(0.5);
@@ -30,25 +30,25 @@ describe('parent unlock recognizer', () => {
     const unlock = beginChord();
     expect(unlock.tick(1999)).toBe(false);
     expect(unlock.progress().phase).toBe('holding');
-    unlock.input(key({ type: 'up', code: 'KeyK', key: 'k', meta: true, alt: true, at: 1999 }));
+    unlock.input(key({ type: 'up', code: 'KeyK', key: 'k', control: true, shift: true, at: 1999 }));
     expect(unlock.progress().phase).toBe('idle');
   });
 
   it('cancels when K or either modifier is released', () => {
     const releaseK = beginChord();
-    releaseK.input(key({ type: 'up', code: 'KeyK', key: 'k', meta: true, alt: true, at: 1000 }));
+    releaseK.input(key({ type: 'up', code: 'KeyK', key: 'k', control: true, shift: true, at: 1000 }));
     expect(releaseK.tick(3000)).toBe(false);
 
-    const releaseOption = beginChord();
-    releaseOption.input(key({ type: 'up', code: 'AltLeft', key: 'Alt', meta: true, alt: false, at: 1000 }));
-    expect(releaseOption.tick(3000)).toBe(false);
+    const releaseShift = beginChord();
+    releaseShift.input(key({ type: 'up', code: 'ShiftLeft', key: 'Shift', control: true, shift: false, at: 1000 }));
+    expect(releaseShift.tick(3000)).toBe(false);
   });
 
   it('cancels when any extra key or modifier is pressed', () => {
     for (const extra of [
-      key({ type: 'down', code: 'KeyX', key: 'x', meta: true, alt: true, at: 1 }),
-      key({ type: 'down', code: 'ShiftLeft', key: 'Shift', meta: true, alt: true, shift: true, at: 1 }),
-      key({ type: 'down', code: 'ControlLeft', key: 'Control', meta: true, alt: true, control: true, at: 1 }),
+      key({ type: 'down', code: 'KeyX', key: 'x', control: true, shift: true, at: 1 }),
+      key({ type: 'down', code: 'MetaLeft', key: 'Meta', meta: true, control: true, shift: true, at: 1 }),
+      key({ type: 'down', code: 'AltLeft', key: 'Alt', alt: true, control: true, shift: true, at: 1 }),
     ]) {
       const unlock = beginChord();
       unlock.input(extra);
@@ -59,7 +59,7 @@ describe('parent unlock recognizer', () => {
 
   it('ignores autorepeat and resets stale state on discontinuity', () => {
     const unlock = beginChord();
-    unlock.input(key({ type: 'down', code: 'KeyK', key: 'k', meta: true, alt: true, repeat: true, at: 500 }));
+    unlock.input(key({ type: 'down', code: 'KeyK', key: 'k', control: true, shift: true, repeat: true, at: 500 }));
     expect(unlock.progress().phase).toBe('holding');
     unlock.reset();
     expect(unlock.progress()).toEqual({ phase: 'idle', holdProgress: 0 });

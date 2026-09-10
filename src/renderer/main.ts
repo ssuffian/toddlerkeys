@@ -7,8 +7,6 @@ import { createBrowserBridge } from './browser-bridge';
 const electronBridge = window.toddlerKeys;
 const browserMode = !electronBridge;
 const bridge = electronBridge ?? createBrowserBridge();
-const primaryModifierName = browserMode && !/Mac|iPhone|iPad|iPod/i.test(navigator.platform) ? 'Control' : 'Command';
-const secondaryModifierName = primaryModifierName === 'Control' ? 'Alt' : 'Option';
 
 const select = <T extends Element>(selector: string): T => document.querySelector<T>(selector)!;
 const setup = select<HTMLElement>('#setup');
@@ -39,13 +37,6 @@ if (browserMode) {
   select<HTMLElement>('#browser-note').hidden = false;
   select<HTMLButtonElement>('#quit').hidden = true;
   select<HTMLElement>('#lockdown-detail').textContent = 'Best effort in a browser; system shortcuts still work';
-  if (primaryModifierName === 'Control') {
-    select<HTMLElement>('#primary-modifier-key').textContent = 'Ctrl';
-    select<HTMLElement>('#primary-modifier-name').textContent = 'Control';
-    select<HTMLElement>('#secondary-modifier-key').textContent = 'Alt';
-    select<HTMLElement>('#secondary-modifier-name').textContent = 'Alt';
-    select<HTMLElement>('.key-chord').setAttribute('aria-label', 'Control plus Alt plus K');
-  }
   if ('serviceWorker' in navigator) void navigator.serviceWorker.register('./sw.js');
 }
 
@@ -81,7 +72,7 @@ function render(snapshot: AppSnapshot) {
     motionControl.checked = snapshot.settings.reducedMotion;
     exitHintControl.checked = snapshot.settings.showExitHint;
     lockdownControl.checked = snapshot.settings.lockdownMode;
-    playHint.textContent = snapshot.settings.showExitHint ? `Parent exit: hold ${primaryModifierName} + ${secondaryModifierName} + K for 2 seconds` : 'Press any key';
+    playHint.textContent = snapshot.settings.showExitHint ? 'Parent exit: hold Control + Shift + K for 2 seconds' : 'Press any key';
     scene.setReducedMotion(snapshot.settings.reducedMotion);
     sound.configure(snapshot.settings);
   }

@@ -2,7 +2,7 @@
 
 Run this checklist on the packaged app, with an adult at the keyboard. Automated app tests do not replace these checks. Record results in `kiosk-validation.md` with the macOS/Electron version, keyboard, trackpad/mouse, and display setup.
 
-First leave Lockdown mode off. Practice the parent exit in the normal setup window: hold Command + Option + K for two seconds. The app must acknowledge successful practice and enable Start. Start play only when you can repeat this reliably.
+First leave Lockdown mode off. Practice the parent exit in the normal setup window: hold Control + Shift + K for two seconds. The app must acknowledge successful practice and enable Start. Start play only when you can repeat this reliably.
 
 For each escape attempt below, pass means the play session stays visible and other apps remain inaccessible. If anything exposes the desktop, another app, or an OS action panel, record the exact action and stop calling that configuration contained.
 

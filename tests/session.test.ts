@@ -29,7 +29,7 @@ describe('session lifecycle', () => {
 
     practice(controller);
     controller.start();
-    controller.input(key({ type: 'down', code: 'MetaLeft', key: 'Meta', meta: true, at: 20_000 }));
+    controller.input(key({ type: 'down', code: 'ControlLeft', key: 'Control', control: true, at: 20_000 }));
     controller.discontinuity();
     expect(controller.snapshot().unlock.phase).toBe('idle');
   });

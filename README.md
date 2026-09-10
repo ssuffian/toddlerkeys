@@ -4,8 +4,8 @@ A gentle, offline-friendly keyboard play space for young children.
 
 ## Ways to play
 
-- **Web/PWA:** installable from the browser, with best-effort fullscreen behavior.
-- **macOS app:** downloadable Electron build with stronger kiosk containment.
+- **Web/PWA:** [play at toddlerkeys.vercel.app](https://toddlerkeys.vercel.app), with installable best-effort fullscreen behavior.
+- **macOS app:** [download from GitHub Releases](https://github.com/ssuffian/toddlerkeys/releases) after the first signed release is published.
 
 ## Development
 

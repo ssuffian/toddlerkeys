@@ -61,7 +61,7 @@ export class Windows {
       const physical = physicalInput(input, performance.now());
       if (!physical) return;
       // Setup remains a normal parent window; its keyboard chord is still main-owned.
-      if (this.controller.active || physical.meta || physical.alt || this.controller.snapshot().unlock.phase !== 'idle') event.preventDefault();
+      if (this.controller.active || physical.control && physical.shift || this.controller.snapshot().unlock.phase !== 'idle') event.preventDefault();
       if (this.controller.active && physical.type === 'down' && !physical.repeat && (physical.code === 'Escape' || physical.key === 'Escape') && this.controller.exitWithEscape()) return;
       const wasActive = this.controller.active;
       const unlockWasArmed = this.controller.snapshot().unlock.phase !== 'idle';

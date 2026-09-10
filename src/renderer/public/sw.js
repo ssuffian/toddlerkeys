@@ -1,4 +1,4 @@
-const CACHE = 'toddler-keys-v1';
+const CACHE = 'toddler-keys-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -24,12 +24,12 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(
-    caches.match(event.request).then(cached => cached ?? fetch(event.request).then(response => {
+    fetch(event.request).then(response => {
       if (response.ok) {
         const copy = response.clone();
         void caches.open(CACHE).then(cache => cache.put(event.request, copy));
       }
       return response;
-    })),
+    }).catch(async () => (await caches.match(event.request)) ?? (await caches.match('./index.html'))),
   );
 });

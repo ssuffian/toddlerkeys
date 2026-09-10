@@ -10,8 +10,8 @@ export function key(overrides: Partial<PhysicalInput> & Pick<PhysicalInput, 'typ
 }
 
 export function enterChord(target: { input(event: PhysicalInput): unknown; tick(now: number): unknown }, at = 0): boolean {
-  target.input(key({ type: 'down', code: 'MetaLeft', key: 'Meta', meta: true, at }));
-  target.input(key({ type: 'down', code: 'AltLeft', key: 'Alt', meta: true, alt: true, at }));
-  target.input(key({ type: 'down', code: 'KeyK', key: 'k', meta: true, alt: true, at }));
+  target.input(key({ type: 'down', code: 'ControlLeft', key: 'Control', control: true, at }));
+  target.input(key({ type: 'down', code: 'ShiftLeft', key: 'Shift', control: true, shift: true, at }));
+  target.input(key({ type: 'down', code: 'KeyK', key: 'k', control: true, shift: true, at }));
   return Boolean(target.tick(at + 2000));
 }

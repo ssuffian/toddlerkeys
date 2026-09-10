@@ -108,7 +108,7 @@ export interface UnlockRecognizer {
 export function createUnlockRecognizer(): UnlockRecognizer;
 ```
 
-- [ ] Write failing tests for a three-second Command/Option/K hold that completes immediately. A successful practice uses the same recognizer but never changes kiosk state.
+- [ ] Write failing tests for a two-second Control/Shift/K hold that completes immediately. A successful practice uses the same recognizer but never changes kiosk state.
 - [ ] Add cases for early release, extra keys or modifiers, repeated keydown, stale key state after blur/sleep/disconnect, and a correct sequence entered while recovery is active.
 - [ ] Implement the recognizer as a deterministic state machine driven by main-process monotonic time. Use a main timer for the hold; do not depend on autorepeat or renderer animation frames. Reset incomplete attempts on focus/device/session discontinuities.
 - [ ] Implement setup → playing after practice, and playing/recovering → setup only after successful unlock. Block window close and ordinary app quit during the session. Remove guards and covers during intentional parent exit.

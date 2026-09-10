@@ -27,17 +27,15 @@ function storedSettings(): Settings {
   }
 }
 
-function physicalInput(event: KeyboardEvent, type: PhysicalInput['type'], mac: boolean): PhysicalInput {
-  // Control is the practical Command equivalent for the browser build on
-  // Windows/Linux. The native Mac app continues to use the real Command key.
+function physicalInput(event: KeyboardEvent, type: PhysicalInput['type']): PhysicalInput {
   return {
     type,
     code: event.code,
     key: event.key,
-    meta: mac ? event.metaKey : event.ctrlKey,
+    meta: event.metaKey,
     alt: event.altKey,
     shift: event.shiftKey,
-    control: mac ? event.ctrlKey : false,
+    control: event.ctrlKey,
     repeat: event.repeat,
     at: performance.now(),
   };
@@ -46,7 +44,6 @@ function physicalInput(event: KeyboardEvent, type: PhysicalInput['type'], mac: b
 export function createBrowserBridge(): ToddlerKeysBridge {
   const snapshots = new Set<(snapshot: AppSnapshot) => void>();
   const keys = new Set<(key: PlayKey) => void>();
-  const mac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform);
   let previousState: AppSnapshot['state'] = 'setup';
 
   const leaveFullscreen = () => {
@@ -62,7 +59,7 @@ export function createBrowserBridge(): ToddlerKeysBridge {
   }, storedSettings());
 
   const route = (event: KeyboardEvent, type: PhysicalInput['type']) => {
-    const physical = physicalInput(event, type, mac);
+    const physical = physicalInput(event, type);
     const before = controller.snapshot();
     if (before.state === 'playing') event.preventDefault();
 
@@ -72,7 +69,7 @@ export function createBrowserBridge(): ToddlerKeysBridge {
     controller.input(physical);
     const after = controller.snapshot();
     const unlockIsArmed = after.unlock.phase !== 'idle';
-    if (unlockWasArmed || unlockIsArmed || physical.meta && physical.alt) event.preventDefault();
+    if (unlockWasArmed || unlockIsArmed || physical.control && physical.shift) event.preventDefault();
 
     if (before.state === 'playing' && after.state === 'playing' && !unlockWasArmed && !unlockIsArmed && (!physical.repeat || type === 'up')) {
       const normalized = normalizeKey(physical);

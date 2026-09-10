@@ -12,7 +12,7 @@ const isK = (event: PhysicalInput) => event.code === 'KeyK' || event.key.toLower
 
 export function isUnlockStart(event: PhysicalInput): boolean {
   return event.type === 'down' && !event.repeat && isK(event)
-    && event.meta && event.alt && !event.shift && !event.control;
+    && event.control && event.shift && !event.meta && !event.alt;
 }
 
 export function createUnlockRecognizer(): UnlockRecognizer {
@@ -57,7 +57,7 @@ export function createUnlockRecognizer(): UnlockRecognizer {
       // Once armed, releasing K or either modifier, or adding another
       // modifier/key, cancels the attempt. Repeated K events are harmless.
       if (event.repeat && isK(event)) return false;
-      if (!event.meta || !event.alt || event.shift || event.control || event.type === 'up' && isK(event)) {
+      if (!event.control || !event.shift || event.meta || event.alt || event.type === 'up' && isK(event)) {
         reset();
         return false;
       }
