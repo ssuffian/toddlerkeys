@@ -4,6 +4,8 @@
 
 `npm run build:web` produces the static site in `dist/`. It includes the web app manifest, offline service worker, and install icons. The browser version uses fullscreen and Keyboard Lock when available, but it does not claim OS-level containment.
 
+The repository includes `vercel.json`, so importing it into Vercel or running `vercel --prod` uses the correct build command and publishes `dist/`. Keep the service worker and manifest cache headers in that configuration so updates are discovered promptly.
+
 ## Signed macOS downloads
 
 The release workflow builds separate Apple silicon (`arm64`) and Intel (`x64`) ZIP downloads. Add these encrypted GitHub Actions repository secrets before running it:
