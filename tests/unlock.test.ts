@@ -11,7 +11,7 @@ function beginChord(at = 0) {
 }
 
 describe('parent unlock recognizer', () => {
-  it('completes after Command + Option + K is held for three seconds', () => {
+  it('completes after Command + Option + K is held for two seconds', () => {
     const unlock = createUnlockRecognizer();
     expect(enterChord(unlock)).toBe(true);
     expect(unlock.progress()).toEqual({ phase: 'idle', holdProgress: 0 });
@@ -21,16 +21,16 @@ describe('parent unlock recognizer', () => {
     const unlock = createUnlockRecognizer();
     unlock.input(key({ type: 'down', code: 'KeyK', key: 'k', meta: true, alt: true, at: 100 }));
     expect(unlock.progress().phase).toBe('holding');
-    unlock.tick(1600);
+    unlock.tick(1100);
     expect(unlock.progress().holdProgress).toBeCloseTo(0.5);
-    expect(unlock.tick(3100)).toBe(true);
+    expect(unlock.tick(2100)).toBe(true);
   });
 
   it('does not complete before the full hold duration', () => {
     const unlock = beginChord();
-    expect(unlock.tick(2999)).toBe(false);
+    expect(unlock.tick(1999)).toBe(false);
     expect(unlock.progress().phase).toBe('holding');
-    unlock.input(key({ type: 'up', code: 'KeyK', key: 'k', meta: true, alt: true, at: 2999 }));
+    unlock.input(key({ type: 'up', code: 'KeyK', key: 'k', meta: true, alt: true, at: 1999 }));
     expect(unlock.progress().phase).toBe('idle');
   });
 

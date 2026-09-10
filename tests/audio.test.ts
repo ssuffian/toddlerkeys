@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { PlayKey, Settings } from '../src/shared/contracts';
 import { ToneScheduler } from '../src/renderer/audio';
 
-const settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false };
+const settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: false };
 const event = (index: number, phase: PlayKey['phase'] = 'down'): PlayKey => ({ phase, code: `Key${index}`, label: 'A', category: 'letter', colorIndex: index % 8, at: index });
 
 describe('tone scheduler', () => {

@@ -2,7 +2,7 @@
 
 Run this checklist on the packaged app, with an adult at the keyboard. Automated app tests do not replace these checks. Record results in `kiosk-validation.md` with the macOS/Electron version, keyboard, trackpad/mouse, and display setup.
 
-First leave Lockdown mode off. Practice the parent exit in the normal setup window: hold Command + Option + K for three seconds. The app must acknowledge successful practice and enable Start. Start play only when you can repeat this reliably.
+First leave Lockdown mode off. Practice the parent exit in the normal setup window: hold Command + Option + K for two seconds. The app must acknowledge successful practice and enable Start. Start play only when you can repeat this reliably.
 
 For each escape attempt below, pass means the play session stays visible and other apps remain inaccessible. If anything exposes the desktop, another app, or an OS action panel, record the exact action and stop calling that configuration contained.
 
@@ -25,9 +25,9 @@ For each escape attempt below, pass means the play session stays visible and oth
 | Close/open lid; sleep/wake | Record behavior; verify session coverage and exit after wake |
 | Disconnect/reconnect external keyboard | No stale partial unlock; a fresh parent sequence works |
 | Hold one key; mash several keys for ten minutes | No unbounded bubbles/audio, hung window, or accidental exit |
-| Hold exit chord for less than three seconds | Remains playing |
+| Hold exit chord for less than two seconds | Remains playing |
 | Press Shift, Control, or another key during the chord | Attempt resets; remains playing |
-| Hold the exact chord for three seconds | Returns to setup; normal Command-Tab, Quit, Dock, and menus work again |
+| Hold the exact chord for two seconds | Returns to setup; normal Command-Tab, Quit, Dock, and menus work again |
 
 Hardware forced shutdown and privileged process termination are outside an ordinary app's containment contract. Do not test forced shutdown as part of this checklist; it can interrupt unrelated work.
 

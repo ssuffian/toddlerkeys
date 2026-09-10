@@ -9,7 +9,7 @@ export type UnlockProgress = {
   holdProgress: number;
 };
 export type Instrument = 'marimba' | 'piano' | 'bells' | 'softSynth';
-export type Settings = { sound: boolean; volume: number; instrument: Instrument; reducedMotion: boolean; lockdownMode: boolean };
+export type Settings = { sound: boolean; volume: number; instrument: Instrument; reducedMotion: boolean; lockdownMode: boolean; showExitHint: boolean };
 export type PlayKey = {
   phase: 'down' | 'up';
   code: string;
@@ -33,4 +33,4 @@ export const IPC = {
   snapshot: 'toddler:snapshot', getSnapshot: 'toddler:get-snapshot', key: 'toddler:key',
   start: 'toddler:start', settings: 'toddler:settings', quit: 'toddler:quit-from-setup', heartbeat: 'toddler:heartbeat',
 } as const;
-declare global { interface Window { toddlerKeys: ToddlerKeysBridge } }
+declare global { interface Window { toddlerKeys?: ToddlerKeysBridge } }

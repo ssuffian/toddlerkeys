@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#f7eddd">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
     <title>Toddler Keys</title>
   </head>
   <body>
@@ -13,17 +18,18 @@
           <p class="eyebrow">A little space to explore</p>
           <h1 id="app-title">Toddler<br><span>Keys</span></h1>
           <p class="intro">Big keys, gentle sounds, and a moment to play together.</p>
+          <p id="browser-note" class="browser-note" hidden><strong>Browser play</strong> uses fullscreen to reduce distractions. Your computer’s system shortcuts can still leave the game.</p>
           <p class="co-play">Try saying: “You pressed B. Can we find B on the keyboard?”</p>
         </div>
         <div class="setup-panel">
           <div class="practice-card">
             <p class="step">Parent exit practice</p>
             <h2>Try the secret exit once</h2>
-            <p>Hold these keys for three seconds:</p>
+            <p>Hold these keys for two seconds:</p>
             <div class="key-chord" aria-label="Command plus Option plus K">
-              <kbd>⌘</kbd><span>+</span><kbd>⌥</kbd><span>+</span><kbd>K</kbd>
+              <kbd id="primary-modifier-key">⌘</kbd><span>+</span><kbd id="secondary-modifier-key">⌥</kbd><span>+</span><kbd>K</kbd>
             </div>
-            <p><strong>Command + Option + K</strong>. Keep holding until the app confirms it.</p>
+            <p><strong><span id="primary-modifier-name">Command</span> + <span id="secondary-modifier-name">Option</span> + K</strong>. Keep holding until the app confirms it.</p>
             <div id="hold-meter" class="hold-meter" role="progressbar" aria-label="Exit key hold progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
             <p id="progress" class="practice-progress" role="status">Try the sequence now.</p>
           </div>
@@ -33,7 +39,8 @@
             <label class="instrument-row" for="instrument"><span><strong>Instrument</strong><small>Choose the key sound</small></span><select id="instrument"><option value="marimba">Marimba</option><option value="piano">Piano</option><option value="bells">Bells</option><option value="softSynth">Soft Synth</option></select></label>
             <label class="volume-row" for="volume"><span>Volume</span><input id="volume" type="range" min="0" max="1" step="0.05"><output id="volume-value" for="volume">15%</output></label>
             <label class="toggle-row"><span><strong>Reduce motion</strong><small>Keep everything calm and still</small></span><input id="motion" type="checkbox"><i aria-hidden="true"></i></label>
-            <label class="toggle-row"><span><strong>Lockdown mode</strong><small>Disable the Escape key exit</small></span><input id="lockdown" type="checkbox"><i aria-hidden="true"></i></label>
+            <label class="toggle-row"><span><strong>Show exit reminder</strong><small>Display the parent shortcut during play</small></span><input id="exit-hint" type="checkbox"><i aria-hidden="true"></i></label>
+            <label class="toggle-row"><span><strong>Lockdown mode</strong><small id="lockdown-detail">Disable the Escape key exit</small></span><input id="lockdown" type="checkbox"><i aria-hidden="true"></i></label>
           </fieldset>
           <div class="actions">
             <button id="start" disabled><span>Start playing</span><b aria-hidden="true">→</b></button>
@@ -50,7 +57,7 @@
         <div id="play-exit-progress" class="play-exit-progress" hidden aria-live="polite">
           <span>Parent exit — keep holding</span><i><b></b></i>
         </div>
-        <p class="play-hint" aria-hidden="true">Press any key</p>
+        <p id="play-hint" class="play-hint" aria-hidden="true">Press any key</p>
       </section>
       <section id="recovering" class="recovery-view" hidden>
         <div class="recovery-mark" aria-hidden="true">✦</div>

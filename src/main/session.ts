@@ -5,7 +5,7 @@ export class SessionController {
   private practiced = false;
   private unlock = createUnlockRecognizer();
   private settings: Settings;
-  constructor(private changed: (snapshot: AppSnapshot) => void = () => {}, settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false }) { this.settings = { ...settings }; }
+  constructor(private changed: (snapshot: AppSnapshot) => void = () => {}, settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: false }) { this.settings = { ...settings }; }
   get active() { return this.state !== 'setup'; }
   snapshot(): AppSnapshot { return { state: this.state, practiced: this.practiced, unlock: this.unlock.progress(), settings: { ...this.settings } }; }
   private publish() { this.changed(this.snapshot()); }
@@ -46,7 +46,7 @@ export class SessionController {
   updateSettings(value: unknown) {
     if (this.active || !value || typeof value !== 'object' || Array.isArray(value)) return false;
     const s = value as Settings;
-    if (typeof s.sound !== 'boolean' || typeof s.reducedMotion !== 'boolean' || typeof s.lockdownMode !== 'boolean' || !['marimba', 'piano', 'bells', 'softSynth'].includes(s.instrument) || typeof s.volume !== 'number' || !Number.isFinite(s.volume) || Object.keys(s).some(k => !['sound', 'volume', 'instrument', 'reducedMotion', 'lockdownMode'].includes(k))) return false;
-    this.settings = { sound: s.sound, volume: Math.max(0, Math.min(1, s.volume)), instrument: s.instrument, reducedMotion: s.reducedMotion, lockdownMode: s.lockdownMode }; this.publish(); return true;
+    if (typeof s.sound !== 'boolean' || typeof s.reducedMotion !== 'boolean' || typeof s.lockdownMode !== 'boolean' || typeof s.showExitHint !== 'boolean' || !['marimba', 'piano', 'bells', 'softSynth'].includes(s.instrument) || typeof s.volume !== 'number' || !Number.isFinite(s.volume) || Object.keys(s).some(k => !['sound', 'volume', 'instrument', 'reducedMotion', 'lockdownMode', 'showExitHint'].includes(k))) return false;
+    this.settings = { sound: s.sound, volume: Math.max(0, Math.min(1, s.volume)), instrument: s.instrument, reducedMotion: s.reducedMotion, lockdownMode: s.lockdownMode, showExitHint: s.showExitHint }; this.publish(); return true;
   }
 }

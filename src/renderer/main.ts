@@ -2,6 +2,13 @@ import './styles.css';
 import type { AppSnapshot, Settings } from '../shared/contracts';
 import { createScene } from './scene';
 import { createSound } from './audio';
+import { createBrowserBridge } from './browser-bridge';
+
+const electronBridge = window.toddlerKeys;
+const browserMode = !electronBridge;
+const bridge = electronBridge ?? createBrowserBridge();
+const primaryModifierName = browserMode && !/Mac|iPhone|iPad|iPod/i.test(navigator.platform) ? 'Control' : 'Command';
+const secondaryModifierName = primaryModifierName === 'Control' ? 'Alt' : 'Option';
 
 const select = <T extends Element>(selector: string): T => document.querySelector<T>(selector)!;
 const setup = select<HTMLElement>('#setup');
@@ -17,7 +24,9 @@ const instrumentControl = select<HTMLSelectElement>('#instrument');
 const volumeControl = select<HTMLInputElement>('#volume');
 const volumeValue = select<HTMLOutputElement>('#volume-value');
 const motionControl = select<HTMLInputElement>('#motion');
+const exitHintControl = select<HTMLInputElement>('#exit-hint');
 const lockdownControl = select<HTMLInputElement>('#lockdown');
+const playHint = select<HTMLElement>('#play-hint');
 const settingsStatus = select<HTMLElement>('#settings-status');
 const scene = createScene(sceneRoot);
 const sound = createSound();
@@ -25,8 +34,23 @@ let latest: AppSnapshot | undefined;
 let lastState: AppSnapshot['state'] | undefined;
 let renderedSettings = '';
 
+if (browserMode) {
+  document.documentElement.dataset.runtime = 'browser';
+  select<HTMLElement>('#browser-note').hidden = false;
+  select<HTMLButtonElement>('#quit').hidden = true;
+  select<HTMLElement>('#lockdown-detail').textContent = 'Best effort in a browser; system shortcuts still work';
+  if (primaryModifierName === 'Control') {
+    select<HTMLElement>('#primary-modifier-key').textContent = 'Ctrl';
+    select<HTMLElement>('#primary-modifier-name').textContent = 'Control';
+    select<HTMLElement>('#secondary-modifier-key').textContent = 'Alt';
+    select<HTMLElement>('#secondary-modifier-name').textContent = 'Alt';
+    select<HTMLElement>('.key-chord').setAttribute('aria-label', 'Control plus Alt plus K');
+  }
+  if ('serviceWorker' in navigator) void navigator.serviceWorker.register('./sw.js');
+}
+
 function readControls(): Settings {
-  return { sound: soundControl.checked, volume: Number(volumeControl.value), instrument: instrumentControl.value as Settings['instrument'], reducedMotion: motionControl.checked, lockdownMode: lockdownControl.checked };
+  return { sound: soundControl.checked, volume: Number(volumeControl.value), instrument: instrumentControl.value as Settings['instrument'], reducedMotion: motionControl.checked, lockdownMode: lockdownControl.checked, showExitHint: exitHintControl.checked };
 }
 
 function render(snapshot: AppSnapshot) {
@@ -44,7 +68,7 @@ function render(snapshot: AppSnapshot) {
   playExitProgress.hidden = snapshot.state !== 'playing' || unlock.phase !== 'holding';
   playExitProgress.style.setProperty('--hold-progress', `${holdPercent}%`);
   progress.textContent = unlock.phase === 'holding'
-    ? `Keep holding… ${Math.max(1, Math.ceil((1 - unlock.holdProgress) * 3))}`
+    ? `Keep holding… ${Math.max(1, Math.ceil((1 - unlock.holdProgress) * 2))}`
     : snapshot.practiced ? 'Practice complete. You’re ready.' : 'Try the sequence now.';
 
   const settingsKey = JSON.stringify(snapshot.settings);
@@ -55,7 +79,9 @@ function render(snapshot: AppSnapshot) {
     volumeControl.value = String(snapshot.settings.volume);
     volumeValue.value = `${Math.round(snapshot.settings.volume * 100)}%`;
     motionControl.checked = snapshot.settings.reducedMotion;
+    exitHintControl.checked = snapshot.settings.showExitHint;
     lockdownControl.checked = snapshot.settings.lockdownMode;
+    playHint.textContent = snapshot.settings.showExitHint ? `Parent exit: hold ${primaryModifierName} + ${secondaryModifierName} + K for 2 seconds` : 'Press any key';
     scene.setReducedMotion(snapshot.settings.reducedMotion);
     sound.configure(snapshot.settings);
   }
@@ -69,16 +95,16 @@ function render(snapshot: AppSnapshot) {
 
 async function saveControls() {
   settingsStatus.textContent = '';
-  const accepted = await window.toddlerKeys.updateSettings(readControls()).catch(() => false);
+  const accepted = await bridge.updateSettings(readControls()).catch(() => false);
   settingsStatus.textContent = accepted ? 'Saved' : 'Couldn’t save settings';
   window.setTimeout(() => { settingsStatus.textContent = ''; }, 1400);
 }
 
-window.toddlerKeys.onSnapshot(render);
-window.toddlerKeys.onKey(key => { scene.accept(key); sound.accept(key); });
-void window.toddlerKeys.getSnapshot().then(render);
-start.addEventListener('click', () => { void sound.unlock(); void window.toddlerKeys.start(); });
-select<HTMLButtonElement>('#quit').addEventListener('click', () => { void window.toddlerKeys.quitFromSetup(); });
+bridge.onSnapshot(render);
+bridge.onKey(key => { scene.accept(key); sound.accept(key); });
+void bridge.getSnapshot().then(render);
+start.addEventListener('click', () => { void sound.unlock(); void bridge.start(); });
+select<HTMLButtonElement>('#quit').addEventListener('click', () => { void bridge.quitFromSetup(); });
 soundControl.addEventListener('change', () => { sound.configure(readControls()); void saveControls(); });
 instrumentControl.addEventListener('change', async () => {
   sound.configure(readControls());
@@ -89,6 +115,7 @@ instrumentControl.addEventListener('change', async () => {
 volumeControl.addEventListener('input', () => { volumeValue.value = `${Math.round(Number(volumeControl.value) * 100)}%`; sound.configure(readControls()); });
 volumeControl.addEventListener('change', () => { void saveControls(); });
 motionControl.addEventListener('change', () => { scene.setReducedMotion(motionControl.checked); void saveControls(); });
+exitHintControl.addEventListener('change', () => { void saveControls(); });
 lockdownControl.addEventListener('change', () => { void saveControls(); });
 play.addEventListener('pointerdown', event => {
   if (latest?.settings.reducedMotion) return;

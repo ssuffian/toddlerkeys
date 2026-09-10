@@ -7,7 +7,7 @@ export interface UnlockRecognizer {
   progress(): UnlockProgress;
 }
 
-const HOLD_MS = 3000;
+const HOLD_MS = 2000;
 const isK = (event: PhysicalInput) => event.code === 'KeyK' || event.key.toLowerCase() === 'k';
 
 export function isUnlockStart(event: PhysicalInput): boolean {

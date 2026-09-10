@@ -3,7 +3,7 @@ import path from 'node:path';
 import type { Instrument, Settings } from '../shared/contracts';
 
 const instruments = new Set<Instrument>(['marimba', 'piano', 'bells', 'softSynth']);
-export const defaultSettings = (reducedMotion = false): Settings => ({ sound: true, volume: 0.15, instrument: 'marimba', reducedMotion, lockdownMode: false });
+export const defaultSettings = (reducedMotion = false): Settings => ({ sound: true, volume: 0.15, instrument: 'marimba', reducedMotion, lockdownMode: false, showExitHint: false });
 
 export function sanitizeSettings(value: unknown, fallback: Settings): Settings {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...fallback };
@@ -15,6 +15,7 @@ export function sanitizeSettings(value: unknown, fallback: Settings): Settings {
     instrument: typeof candidate.instrument === 'string' && instruments.has(candidate.instrument as Instrument) ? candidate.instrument as Instrument : 'marimba',
     reducedMotion: candidate.reducedMotion,
     lockdownMode: typeof candidate.lockdownMode === 'boolean' ? candidate.lockdownMode : false,
+    showExitHint: typeof candidate.showExitHint === 'boolean' ? candidate.showExitHint : false,
   };
 }
 

@@ -4,9 +4,21 @@ import { VitePlugin } from '@electron-forge/plugin-vite';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
+const signingIdentity = process.env.MACOS_SIGN_IDENTITY;
+const appleId = process.env.APPLE_ID;
+const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD;
+const teamId = process.env.APPLE_TEAM_ID;
+
 // Adapted from the official Forge 7.11.2 Vite + TypeScript template.
 const config: ForgeConfig = {
-  packagerConfig: { asar: true, icon: 'assets/AppIcon.icns', appBundleId: 'local.toddlerkeys.app', appCategoryType: 'public.app-category.education' },
+  packagerConfig: {
+    asar: true,
+    icon: 'assets/AppIcon.icns',
+    appBundleId: 'local.toddlerkeys.app',
+    appCategoryType: 'public.app-category.education',
+    osxSign: signingIdentity ? { identity: signingIdentity } : undefined,
+    osxNotarize: appleId && appleIdPassword && teamId ? { appleId, appleIdPassword, teamId } : undefined,
+  },
   rebuildConfig: {},
   makers: [new MakerZIP({}, ['darwin'])],
   plugins: [
