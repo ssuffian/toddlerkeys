@@ -17,14 +17,16 @@ const macSignOptions = signingIdentity
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    icon: 'assets/AppIcon.icns',
+    icon: process.platform === 'darwin'
+      ? 'assets/AppIcon.icns'
+      : 'assets/AppIcon.iconset/icon_512x512.png',
     appBundleId: 'local.toddlerkeys.app',
     appCategoryType: 'public.app-category.education',
     osxSign: macSignOptions,
     osxNotarize: notaryKeychainProfile ? { keychainProfile: notaryKeychainProfile } : undefined,
   },
   rebuildConfig: {},
-  makers: [new MakerZIP({}, ['darwin'])],
+  makers: [new MakerZIP({}, ['darwin', 'linux'])],
   plugins: [
     new VitePlugin({
       build: [

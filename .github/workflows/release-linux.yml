@@ -1,0 +1,45 @@
+name: Release Linux app
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag, such as v0.1.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Linux ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run make:linux -- --arch=${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Toddler-Keys-Linux-${{ matrix.arch }}
+          path: out/make/zip/linux/${{ matrix.arch }}/*.zip
+
+      - name: Attach download to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: gh release upload "$RELEASE_TAG" out/make/zip/linux/${{ matrix.arch }}/*.zip --clobber

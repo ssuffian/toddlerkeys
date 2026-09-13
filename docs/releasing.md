@@ -38,4 +38,10 @@ Run `npm run publish:mac` to do the same and upload both ZIPs to a GitHub Releas
 
 The release script explicitly refuses the Why Not Prosper team ID (`NGV7NNRRL2`) and will stop if personal team selection is ambiguous.
 
+## Linux downloads
+
+Publishing a GitHub release automatically runs `.github/workflows/release-linux.yml` on Ubuntu. It builds portable ZIPs for x64 PCs and ARM64 machines and attaches both to the same release. Linux builds do not use the Apple certificate or notarization credentials.
+
+To rebuild Linux for an existing release, open **Actions > Release Linux app > Run workflow**, enter the existing tag such as `v0.1.0`, and run it. Locally, `npm run make:linux -- --arch=x64` runs the same Forge build when executed on Linux.
+
 Never put certificate files, passwords, or Apple credentials in this repository.
