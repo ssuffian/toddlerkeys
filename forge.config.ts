@@ -3,6 +3,7 @@ import { MakerZIP } from '@electron-forge/maker-zip';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
+import path from 'node:path';
 
 const signingIdentity = process.env.MACOS_SIGN_IDENTITY;
 const notaryKeychainProfile = process.env.MACOS_NOTARY_PROFILE;
@@ -10,7 +11,12 @@ const notaryKeychainProfile = process.env.MACOS_NOTARY_PROFILE;
 // signing type currently omits it. Keeping it in a variable avoids weakening
 // the type of the whole Forge configuration.
 const macSignOptions = signingIdentity
-  ? { identity: signingIdentity, continueOnError: false }
+  ? {
+      identity: signingIdentity,
+      entitlements: path.resolve('assets/entitlements.mac.plist'),
+      hardenedRuntime: true,
+      continueOnError: false,
+    }
   : undefined;
 
 // Adapted from the official Forge 7.11.2 Vite + TypeScript template.

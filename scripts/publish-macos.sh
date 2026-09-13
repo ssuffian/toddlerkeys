@@ -6,7 +6,10 @@ set -euo pipefail
 
 readonly version="$(node -p "require('./package.json').version")"
 readonly tag="v${version}"
-artifacts=(out/make/zip/darwin/arm64/*.zip out/make/zip/darwin/x64/*.zip)
+artifacts=(
+  "out/make/zip/darwin/arm64/Toddler Keys-darwin-arm64-${version}.zip"
+  "out/make/zip/darwin/x64/Toddler Keys-darwin-x64-${version}.zip"
+)
 
 gh release create "$tag" "${artifacts[@]}" --generate-notes --title "Toddler Keys ${tag}"
 

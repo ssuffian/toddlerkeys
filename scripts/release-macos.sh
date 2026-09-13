@@ -46,11 +46,51 @@ if ! xcrun notarytool history --keychain-profile "$notary_profile" >/dev/null 2>
 fi
 
 export MACOS_SIGN_IDENTITY="$signing_identity"
-export MACOS_NOTARY_PROFILE="$notary_profile"
+unset MACOS_NOTARY_PROFILE
+
+readonly version="$(node -p "require('./package.json').version")"
+readonly entitlements="assets/entitlements.mac.plist"
+
+build_release() {
+  local arch="$1"
+  local app_path="out/Toddler Keys-darwin-${arch}/Toddler Keys.app"
+  local artifact_dir="out/make/zip/darwin/${arch}"
+  local artifact_path="${artifact_dir}/Toddler Keys-darwin-${arch}-${version}.zip"
+  local notary_dir
+  local verify_dir
+
+  npm run make:mac -- --arch="$arch"
+
+  # Forge's fuse pass can mutate the executable after its first signature.
+  # Re-sign the final bundle, then notarize exactly those final bytes.
+  codesign --force --deep --options runtime --timestamp \
+    --entitlements "$entitlements" \
+    --sign "$signing_identity" \
+    "$app_path"
+  codesign --verify --deep --strict --verbose=4 "$app_path"
+
+  notary_dir="$(mktemp -d "/tmp/toddlerkeys-notary-${arch}.XXXXXX")"
+  ditto -c -k --sequesterRsrc --keepParent "$app_path" "${notary_dir}/Toddler-Keys.zip"
+  xcrun notarytool submit "${notary_dir}/Toddler-Keys.zip" \
+    --keychain-profile "$notary_profile" \
+    --wait
+  xcrun stapler staple "$app_path"
+  xcrun stapler validate "$app_path"
+  spctl --assess --type execute --verbose=4 "$app_path"
+
+  mkdir -p "$artifact_dir"
+  rm -f "$artifact_path"
+  ditto -c -k --sequesterRsrc --keepParent "$app_path" "$artifact_path"
+
+  verify_dir="$(mktemp -d "/tmp/toddlerkeys-verify-${arch}.XXXXXX")"
+  ditto -x -k "$artifact_path" "$verify_dir"
+  codesign --verify --deep --strict --verbose=4 "${verify_dir}/Toddler Keys.app"
+  spctl --assess --type execute --verbose=4 "${verify_dir}/Toddler Keys.app"
+}
 
 npm test
 npm run typecheck
-npm run make:mac -- --arch=arm64
-npm run make:mac -- --arch=x64
+build_release arm64
+build_release x64
 
 print "Signed and notarized downloads are in out/make/zip/darwin/."
