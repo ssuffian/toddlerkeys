@@ -14,6 +14,8 @@
     "build:web": "vite build --config vite.web.config.ts",
     "preview:web": "vite preview --config vite.web.config.ts",
     "make:mac": "electron-forge make --platform=darwin",
+    "release:mac": "./scripts/release-macos.sh",
+    "publish:mac": "./scripts/publish-macos.sh",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

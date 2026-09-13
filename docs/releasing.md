@@ -8,16 +8,34 @@ The repository includes `vercel.json`, so importing it into Vercel or running `v
 
 ## Signed macOS downloads
 
-The release workflow builds separate Apple silicon (`arm64`) and Intel (`x64`) ZIP downloads. Add these encrypted GitHub Actions repository secrets before running it:
+Releases are signed and notarized locally, using the Apple credentials in your Mac Keychain. GitHub does not need any Apple secrets.
 
-- `MACOS_CERTIFICATE_BASE64`: exported Developer ID Application `.p12`, base64 encoded
-- `MACOS_CERTIFICATE_PASSWORD`: password used when exporting that certificate
-- `MACOS_SIGN_IDENTITY`: full certificate name, such as `Developer ID Application: Your Name (TEAMID)`
-- `APPLE_ID`: Apple Developer account email
-- `APPLE_APP_SPECIFIC_PASSWORD`: app-specific password for notarization
-- `APPLE_TEAM_ID`: Apple Developer team ID
-- `CI_KEYCHAIN_PASSWORD`: a random password used only for the temporary CI keychain
+### One-time Apple setup
 
-Push a version tag such as `v0.1.0`, or run **Release macOS app** manually from GitHub Actions. Tagged builds are attached to the matching GitHub release after signing and notarization.
+1. In Xcode, open **Settings > Accounts** and select your personal paid Apple Developer team.
+2. Choose **Manage Certificates**, then **+ > Developer ID Application**.
+3. Check the installed identity and note its team ID:
+
+   ```sh
+   security find-identity -v -p codesigning
+   ```
+
+4. Store the personal notarization credentials in Keychain, replacing the placeholders with the personal account and the team ID from that certificate:
+
+   ```sh
+   xcrun notarytool store-credentials "toddlerkeys-notary-PERSONAL_TEAM_ID" \
+     --apple-id "PERSONAL_APPLE_ID" \
+     --team-id "PERSONAL_TEAM_ID"
+   ```
+
+   The command securely prompts for an app-specific password and validates the credentials.
+
+### Build or publish
+
+Run `npm run release:mac` to test, build, sign, and notarize Apple silicon and Intel ZIP downloads locally.
+
+Run `npm run publish:mac` to do the same and upload both ZIPs to a GitHub Release. This requires the GitHub CLI (`gh`) to be signed in. The release tag comes from the `version` in `package.json`.
+
+The release script explicitly refuses the Why Not Prosper team ID (`NGV7NNRRL2`) and will stop if personal team selection is ambiguous.
 
 Never put certificate files, passwords, or Apple credentials in this repository.

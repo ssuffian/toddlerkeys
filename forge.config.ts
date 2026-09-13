@@ -5,9 +5,13 @@ import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
 const signingIdentity = process.env.MACOS_SIGN_IDENTITY;
-const appleId = process.env.APPLE_ID;
-const appleIdPassword = process.env.APPLE_APP_SPECIFIC_PASSWORD;
-const teamId = process.env.APPLE_TEAM_ID;
+const notaryKeychainProfile = process.env.MACOS_NOTARY_PROFILE;
+// @electron/packager supports this flag at runtime, but its public macOS
+// signing type currently omits it. Keeping it in a variable avoids weakening
+// the type of the whole Forge configuration.
+const macSignOptions = signingIdentity
+  ? { identity: signingIdentity, continueOnError: false }
+  : undefined;
 
 // Adapted from the official Forge 7.11.2 Vite + TypeScript template.
 const config: ForgeConfig = {
@@ -16,8 +20,8 @@ const config: ForgeConfig = {
     icon: 'assets/AppIcon.icns',
     appBundleId: 'local.toddlerkeys.app',
     appCategoryType: 'public.app-category.education',
-    osxSign: signingIdentity ? { identity: signingIdentity } : undefined,
-    osxNotarize: appleId && appleIdPassword && teamId ? { appleId, appleIdPassword, teamId } : undefined,
+    osxSign: macSignOptions,
+    osxNotarize: notaryKeychainProfile ? { keychainProfile: notaryKeychainProfile } : undefined,
   },
   rebuildConfig: {},
   makers: [new MakerZIP({}, ['darwin'])],
