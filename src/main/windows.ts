@@ -1,4 +1,4 @@
-import { BrowserWindow, WebContentsView, screen, type WebContents, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
+import { app, BrowserWindow, WebContentsView, screen, type WebContents, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { IPC, type AppSnapshot } from '../shared/contracts';
@@ -18,6 +18,7 @@ export class Windows {
   private lastRecovery = -Infinity;
   private replacing = false;
   private protectedFallback = false;
+  private refocusPending = false;
   private disposed = false;
   private watchdog: ReturnType<typeof setInterval>;
 
@@ -28,10 +29,20 @@ export class Windows {
     void this.primary.loadURL(recoveryURL);
     this.guard(this.primary);
     this.primary.on('resize', () => this.sizeView());
-    this.primary.on('enter-full-screen', () => { this.sizeView(); if (controller.active) this.refreshDisplays(); });
+    this.primary.on('enter-full-screen', () => {
+      this.sizeView();
+      if (controller.active) {
+        this.pinPrimaryToAllWorkspaces(true, true);
+        this.refreshDisplays();
+        this.scheduleRefocus();
+      }
+    });
     this.primary.on('leave-full-screen', () => {
       this.sizeView();
-      if (controller.active) this.primary.setFullScreen(true);
+      if (controller.active) {
+        this.primary.setFullScreen(true);
+        this.scheduleRefocus();
+      }
     });
     this.primary.on('closed', () => this.dispose());
     screen.on('display-added', this.displaysChanged);
@@ -39,7 +50,9 @@ export class Windows {
     screen.on('display-metrics-changed', this.displaysChanged);
     this.replaceView();
     this.watchdog = setInterval(() => {
-      if (controller.active && !this.protectedFallback && performance.now() - this.lastHeartbeat > 6000) this.recover();
+      if (!controller.active) return;
+      if (!this.primary.isFocused()) this.scheduleRefocus();
+      if (!this.protectedFallback && performance.now() - this.lastHeartbeat > 6000) this.recover();
     }, 1000);
   }
   private displaysChanged = () => { this.discontinuity(); if (this.controller.active) this.refreshDisplays(); };
@@ -53,8 +66,35 @@ export class Windows {
   }
   private guard(window: BrowserWindow) {
     window.on('close', event => { if (this.controller.active) event.preventDefault(); });
-    window.on('blur', () => this.discontinuity());
+    window.on('blur', () => {
+      this.discontinuity();
+      if (this.controller.active) this.scheduleRefocus();
+    });
     window.on('minimize', () => { if (this.controller.active) { window.restore(); window.focus(); } });
+  }
+  private pinPrimaryToAllWorkspaces(visible: boolean, alreadyTransformed = false) {
+    if (process.platform === 'darwin') {
+      this.primary.setVisibleOnAllWorkspaces(visible, {
+        visibleOnFullScreen: visible,
+        skipTransformProcessType: alreadyTransformed,
+      });
+    } else {
+      this.primary.setVisibleOnAllWorkspaces(visible);
+    }
+  }
+  private scheduleRefocus() {
+    if (this.refocusPending || this.disposed) return;
+    this.refocusPending = true;
+    setTimeout(() => {
+      this.refocusPending = false;
+      if (this.disposed || !this.controller.active || this.primary.isDestroyed()) return;
+      this.primary.show();
+      this.primary.setAlwaysOnTop(true, 'screen-saver');
+      this.primary.moveTop();
+      if (process.platform === 'darwin') app.focus({ steal: true });
+      this.primary.focus();
+      this.view?.webContents.focus();
+    }, 100);
   }
   private route(contents: WebContents) {
     contents.on('before-input-event', (event, input) => {
@@ -150,13 +190,14 @@ export class Windows {
       this.primary.setClosable(false);
       this.primary.setMovable(false);
       this.primary.setAlwaysOnTop(true, 'screen-saver');
+      this.pinPrimaryToAllWorkspaces(true);
       this.primary.setBounds(screen.getPrimaryDisplay().bounds);
       this.refreshDisplays();
       this.primary.setKiosk(true);
-      this.primary.focus();
-      this.view?.webContents.focus();
+      this.scheduleRefocus();
     } else if (previous !== 'setup' && snapshot.state === 'setup') {
       this.primary.setKiosk(false);
+      this.pinPrimaryToAllWorkspaces(false);
       for (const cover of this.covers.values()) cover.destroy();
       this.covers.clear();
       this.primary.setAlwaysOnTop(false);

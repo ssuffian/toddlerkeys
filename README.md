@@ -18,6 +18,7 @@ npm run typecheck
 Run the browser version with `npm run build:web` and `npm run preview:web`. Run the Mac app locally with `npm start`.
 
 Release and Apple signing setup are documented in [`docs/releasing.md`](docs/releasing.md).
+For the strongest practical Mac containment, follow the one-time [`macOS kiosk setup`](docs/macos-kiosk-setup.md).
 
 ## Publishing a new version
 
