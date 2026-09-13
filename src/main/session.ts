@@ -5,7 +5,7 @@ export class SessionController {
   private practiced = false;
   private unlock = createUnlockRecognizer();
   private settings: Settings;
-  constructor(private changed: (snapshot: AppSnapshot) => void = () => {}, settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: false }) { this.settings = { ...settings }; }
+  constructor(private changed: (snapshot: AppSnapshot) => void = () => {}, settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: true }) { this.settings = { ...settings }; }
   get active() { return this.state !== 'setup'; }
   snapshot(): AppSnapshot { return { state: this.state, practiced: this.practiced, unlock: this.unlock.progress(), settings: { ...this.settings } }; }
   private publish() { this.changed(this.snapshot()); }

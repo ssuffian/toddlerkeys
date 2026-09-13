@@ -6,7 +6,7 @@ import { defaultSettings, sanitizeSettings, SettingsStore } from '../src/main/se
 
 describe('settings validation', () => {
   it('uses the OS reduced-motion preference only for defaults', () => {
-    expect(defaultSettings(true)).toEqual({ sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: true, lockdownMode: false, showExitHint: false });
+    expect(defaultSettings(true)).toEqual({ sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: true, lockdownMode: false, showExitHint: true });
   });
 
   it('loads complete valid values and clamps volume', () => {
@@ -14,9 +14,9 @@ describe('settings validation', () => {
     expect(sanitizeSettings({ sound: false, volume: -2, instrument: 'bells', reducedMotion: true, lockdownMode: true, showExitHint: true }, fallback)).toEqual({ sound: false, volume: 0, instrument: 'bells', reducedMotion: true, lockdownMode: true, showExitHint: true });
   });
 
-  it('keeps Lockdown off when loading settings saved by an older build', () => {
+  it('keeps Lockdown off and enables the exit hint for settings saved by an older build', () => {
     const fallback = defaultSettings(false);
-    expect(sanitizeSettings({ sound: true, volume: 0.2, reducedMotion: false }, fallback)).toMatchObject({ instrument: 'marimba', lockdownMode: false, showExitHint: false });
+    expect(sanitizeSettings({ sound: true, volume: 0.2, reducedMotion: false }, fallback)).toMatchObject({ instrument: 'marimba', lockdownMode: false, showExitHint: true });
   });
 
   it('falls back as a unit for corrupt or incomplete data', () => {

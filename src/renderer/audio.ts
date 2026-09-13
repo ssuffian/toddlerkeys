@@ -43,7 +43,7 @@ export interface Sound {
 
 export function createSound(): Sound {
   let context: AudioContext | undefined;
-  let settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: false };
+  let settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: true };
   let scheduler = new ToneScheduler();
   const voices = new Set<OscillatorNode>();
 

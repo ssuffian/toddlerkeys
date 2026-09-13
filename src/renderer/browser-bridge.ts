@@ -9,7 +9,7 @@ const defaults = (): Settings => ({
   instrument: 'marimba',
   reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   lockdownMode: false,
-  showExitHint: false,
+  showExitHint: true,
 });
 
 type KeyboardLockNavigator = Navigator & {
