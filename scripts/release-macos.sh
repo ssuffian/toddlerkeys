@@ -45,7 +45,10 @@ if ! xcrun notarytool history --keychain-profile "$notary_profile" >/dev/null 2>
   exit 1
 fi
 
-export MACOS_SIGN_IDENTITY="$signing_identity"
+# Package first, then sign the final bytes below. This avoids Forge signing
+# before its remaining package-time mutations and removes a redundant call to
+# Apple's timestamp service.
+unset MACOS_SIGN_IDENTITY
 unset MACOS_NOTARY_PROFILE
 
 readonly version="$(node -p "require('./package.json').version")"
