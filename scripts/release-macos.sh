@@ -52,7 +52,6 @@ unset MACOS_SIGN_IDENTITY
 unset MACOS_NOTARY_PROFILE
 
 readonly version="$(node -p "require('./package.json').version")"
-readonly entitlements="assets/entitlements.mac.plist"
 
 build_release() {
   local arch="$1"
@@ -66,10 +65,7 @@ build_release() {
 
   # Forge's fuse pass can mutate the executable after its first signature.
   # Re-sign the final bundle, then notarize exactly those final bytes.
-  codesign --force --deep --options runtime --timestamp \
-    --entitlements "$entitlements" \
-    --sign "$signing_identity" \
-    "$app_path"
+  node scripts/sign-macos.cjs "$app_path" "$signing_identity"
   codesign --verify --deep --strict --verbose=4 "$app_path"
 
   notary_dir="$(mktemp -d "/tmp/toddlerkeys-notary-${arch}.XXXXXX")"
