@@ -1,0 +1,48 @@
+:root {
+  font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #203b3f;
+  background: #f7eddd;
+  font-synthesis: none;
+}
+* { box-sizing: border-box; }
+body { min-width: 280px; min-height: 100vh; margin: 0; background: radial-gradient(circle at 8% 9%, rgba(242, 183, 121, .36) 0 8%, transparent 8.2%), radial-gradient(circle at 92% 62%, rgba(101, 169, 156, .2) 0 11%, transparent 11.2%), #f7eddd; }
+a { color: inherit; }
+.site-header { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 24px 0; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.brand { display: flex; align-items: center; gap: 11px; text-decoration: none; font-weight: 820; letter-spacing: -.02em; }
+.brand img { width: 42px; height: 42px; border-radius: 11px; box-shadow: 0 5px 14px rgba(65, 50, 34, .13); }
+.play-link { color: #1f6e5d; font-size: 14px; font-weight: 760; text-underline-offset: 4px; }
+main { width: min(980px, calc(100% - 40px)); margin: 0 auto; padding: 66px 0 80px; }
+.hero { max-width: 760px; margin-bottom: 54px; }
+.eyebrow, .recommended, .platform-label { margin: 0 0 10px; color: #b25d42; font-size: 12px; font-weight: 820; letter-spacing: .15em; text-transform: uppercase; }
+.hero h1 { margin: 0; color: #173f43; font-size: clamp(46px, 8vw, 82px); line-height: .96; letter-spacing: -.06em; }
+.hero h1 span { color: #d66d4a; }
+.lede { max-width: 620px; margin: 26px 0 0; color: #526b6b; font-size: clamp(18px, 2.5vw, 22px); line-height: 1.5; }
+.platform-card { margin: 22px 0; padding: clamp(24px, 4vw, 42px); border: 1px solid rgba(64, 73, 66, .1); border-radius: 28px; background: rgba(255, 253, 247, .92); box-shadow: 0 20px 55px rgba(80, 57, 32, .1); }
+.mac-card { border-color: rgba(214, 109, 74, .2); }
+.platform-intro { display: grid; grid-template-columns: 58px 1fr; gap: 20px; align-items: start; }
+.platform-mark { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 17px; background: #f3e6d4; color: #b95f43; font-size: 30px; font-weight: 800; }
+.linux-mark { background: #dcece5; color: #27705f; font-size: 22px; }
+.platform-intro h2 { margin: 0; color: #203f42; font-size: clamp(27px, 4vw, 38px); letter-spacing: -.035em; }
+.platform-intro p:last-child { max-width: 680px; margin: 10px 0 0; color: #607170; line-height: 1.55; }
+.choices { margin-top: 28px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.download-button { min-height: 94px; padding: 19px 21px; display: flex; flex-direction: column; justify-content: center; gap: 6px; border: 1px solid #d9d1c4; border-radius: 17px; background: #fff; text-decoration: none; transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.download-button span { color: #244b4c; font-size: 18px; font-weight: 820; }
+.download-button small { color: #73817e; font-size: 13px; line-height: 1.35; }
+.download-button.primary { border-color: #1f6e5d; background: #1f6e5d; box-shadow: 0 10px 24px rgba(31, 110, 93, .2); }
+.download-button.primary span, .download-button.primary small { color: #fff; }
+.download-button:hover { transform: translateY(-2px); border-color: #579584; box-shadow: 0 12px 28px rgba(55, 69, 61, .12); }
+.download-button:focus-visible, .play-link:focus-visible, .brand:focus-visible, summary:focus-visible { outline: 3px solid rgba(214, 109, 74, .55); outline-offset: 4px; }
+details { margin-top: 22px; color: #566c6b; font-size: 14px; }
+summary { width: fit-content; cursor: pointer; color: #315d59; font-weight: 760; }
+details p { max-width: 680px; margin: 11px 0 0; line-height: 1.55; }
+.help { margin: 34px 0 0; color: #667876; font-size: 14px; text-align: center; }
+@media (max-width: 650px) {
+  .site-header { width: min(100% - 28px, 1120px); padding-top: 16px; }
+  .brand span { display: none; }
+  main { width: min(100% - 28px, 980px); padding-top: 42px; }
+  .hero { margin-bottom: 38px; }
+  .choices { grid-template-columns: 1fr; }
+  .platform-intro { grid-template-columns: 48px 1fr; gap: 14px; }
+  .platform-mark { width: 48px; height: 48px; border-radius: 14px; font-size: 25px; }
+}
+@media (prefers-reduced-motion: reduce) { .download-button { transition: none; } }

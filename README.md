@@ -5,7 +5,7 @@ A gentle, offline-friendly keyboard play space for young children.
 ## Ways to play
 
 - **Web/PWA:** [play at toddlerkeys.vercel.app](https://toddlerkeys.vercel.app), with installable best-effort fullscreen behavior.
-- **Desktop apps:** [download macOS and Linux builds from GitHub Releases](https://github.com/ssuffian/toddlerkeys/releases). The macOS builds are signed and notarized by Apple.
+- **Desktop apps:** [choose the right Mac or Linux download](https://toddlerkeys.vercel.app/download/). The macOS builds are signed and notarized by Apple.
 
 ## Development
 
@@ -28,4 +28,4 @@ Apple credentials stay in the local Mac Keychain; GitHub does not store them.
 2. Commit and push the finished changes to `main`.
 3. Run `npm run publish:mac` on the configured Mac.
 
-That command tests the app, builds and notarizes both Mac versions, and creates the GitHub release. Publishing the release automatically triggers GitHub to build Linux x64 and ARM64 ZIPs and attach them to the same release. Downloads then appear on the [GitHub Releases page](https://github.com/ssuffian/toddlerkeys/releases), which is also linked from the website.
+That command tests the app, builds and notarizes DMG and ZIP downloads for both Mac architectures, and creates the GitHub release. Publishing the release automatically triggers GitHub to build Linux x64 and ARM64 Debian installers and attach them to the same release. The website's [download page](https://toddlerkeys.vercel.app/download/) links directly to those files with plain-language architecture guidance.

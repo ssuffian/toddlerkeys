@@ -8,6 +8,9 @@ import { physicalInput, playKey } from './input';
 const recoveryDocument = `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><style>body{margin:0;background:#fbf4e8;color:#233b43;display:grid;place-content:center;height:100vh;font:24px system-ui;text-align:center}p{max-width:600px;line-height:1.6}</style></head><body><h1>Toddler Keys</h1><p>Taking a quiet moment.<br>A parent can use the exit sequence to return to setup.</p></body></html>`;
 const recoveryURL = `data:text/html;charset=utf-8,${encodeURIComponent(recoveryDocument)}`;
 const preferences = { nodeIntegration: false, contextIsolation: true, sandbox: true, devTools: false, webSecurity: true };
+const windowIcon = process.platform === 'linux'
+  ? path.join(app.getAppPath(), 'assets/AppIcon.iconset/icon_512x512.png')
+  : undefined;
 
 export class Windows {
   readonly primary: BrowserWindow;
@@ -23,7 +26,7 @@ export class Windows {
   private watchdog: ReturnType<typeof setInterval>;
 
   constructor(readonly controller: SessionController) {
-    this.primary = new BrowserWindow({ width: 1000, height: 760, minWidth: 760, minHeight: 650, title: 'Toddler Keys', backgroundColor: '#fbf4e8', show: false, webPreferences: preferences });
+    this.primary = new BrowserWindow({ width: 1000, height: 760, minWidth: 760, minHeight: 650, title: 'Toddler Keys', icon: windowIcon, backgroundColor: '#fbf4e8', show: false, webPreferences: preferences });
     this.secure(this.primary.webContents);
     this.route(this.primary.webContents);
     void this.primary.loadURL(recoveryURL);
@@ -214,7 +217,7 @@ export class Windows {
     for (const display of displays) {
       let cover = this.covers.get(display.id);
       if (!cover) {
-        cover = new BrowserWindow({ ...display.bounds, frame: false, resizable: false, movable: false, minimizable: false, maximizable: false, closable: false, roundedCorners: false, hasShadow: false, backgroundColor: '#fbf4e8', show: false, webPreferences: preferences });
+        cover = new BrowserWindow({ ...display.bounds, frame: false, resizable: false, movable: false, minimizable: false, maximizable: false, closable: false, roundedCorners: false, hasShadow: false, icon: windowIcon, backgroundColor: '#fbf4e8', show: false, webPreferences: preferences });
         this.secure(cover.webContents);
         this.route(cover.webContents);
         this.guard(cover);

@@ -1,4 +1,5 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
+import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
@@ -7,6 +8,7 @@ import path from 'node:path';
 
 const signingIdentity = process.env.MACOS_SIGN_IDENTITY;
 const notaryKeychainProfile = process.env.MACOS_NOTARY_PROFILE;
+const linuxIcon = path.resolve('assets/AppIcon.iconset/icon_512x512.png');
 // @electron/packager supports this flag at runtime, but its public macOS
 // signing type currently omits it. Keeping it in a variable avoids weakening
 // the type of the whole Forge configuration.
@@ -23,16 +25,31 @@ const macSignOptions = signingIdentity
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    executableName: process.platform === 'linux' ? 'toddlerkeys' : undefined,
     icon: process.platform === 'darwin'
       ? 'assets/AppIcon.icns'
-      : 'assets/AppIcon.iconset/icon_512x512.png',
+      : linuxIcon,
     appBundleId: 'local.toddlerkeys.app',
     appCategoryType: 'public.app-category.education',
     osxSign: macSignOptions,
     osxNotarize: notaryKeychainProfile ? { keychainProfile: notaryKeychainProfile } : undefined,
   },
   rebuildConfig: {},
-  makers: [new MakerZIP({}, ['darwin', 'linux'])],
+  makers: [
+    new MakerZIP({}, ['darwin']),
+    new MakerDeb({
+      options: {
+        name: 'toddlerkeys',
+        productName: 'Toddler Keys',
+        genericName: 'Keyboard play space',
+        description: 'A gentle, offline keyboard play space for young children',
+        categories: ['Education', 'Game'],
+        icon: linuxIcon,
+        maintainer: 'Toddler Keys',
+        homepage: 'https://github.com/ssuffian/toddlerkeys',
+      },
+    }, ['linux']),
+  ],
   plugins: [
     new VitePlugin({
       build: [

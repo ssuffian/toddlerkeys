@@ -32,15 +32,17 @@ Releases are signed and notarized locally, using the Apple credentials in your M
 
 ### Build or publish
 
-Run `npm run release:mac` to test, build, sign, and notarize Apple silicon and Intel ZIP downloads locally.
+Run `npm run release:mac` to test, build, sign, and notarize Apple silicon and Intel DMG downloads locally. It also produces ZIP fallbacks. The DMGs contain an Applications shortcut for the familiar drag-to-install flow, and both the app and final disk image are notarized and stapled.
 
-Run `npm run publish:mac` to do the same and upload both ZIPs to a GitHub Release. This requires the GitHub CLI (`gh`) to be signed in. The release tag comes from the `version` in `package.json`.
+Run `npm run publish:mac` to do the same and upload both DMGs and both ZIP fallbacks to a GitHub Release. This requires the GitHub CLI (`gh`) to be signed in. The release tag comes from the `version` in `package.json`.
 
 The release script explicitly refuses the Why Not Prosper team ID (`NGV7NNRRL2`) and will stop if personal team selection is ambiguous.
 
 ## Linux downloads
 
-Publishing a GitHub release automatically runs `.github/workflows/release-linux.yml` on Ubuntu. It builds portable ZIPs for x64 PCs and ARM64 machines and attaches both to the same release. Linux builds do not use the Apple certificate or notarization credentials.
+Publishing a GitHub release automatically runs `.github/workflows/release-linux.yml` on Ubuntu. It builds installable Debian packages for x64 PCs and ARM64 machines and attaches both to the same release. Installing the package registers the Toddler Keys launcher and icon with the desktop and preserves Electron's Linux sandbox helper permissions. Linux builds do not use the Apple certificate or notarization credentials.
+
+Release assets use stable names so `/download/` can link straight to the latest files without exposing the GitHub Releases interface. Keep those names in sync between the release scripts, Linux workflow, and download page.
 
 To rebuild Linux for an existing release, open **Actions > Release Linux app > Run workflow**, enter the existing tag such as `v0.1.0`, and run it. Locally, `npm run make:linux -- --arch=x64` runs the same Forge build when executed on Linux.
 

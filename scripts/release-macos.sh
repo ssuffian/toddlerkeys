@@ -51,13 +51,20 @@ fi
 unset MACOS_SIGN_IDENTITY
 unset MACOS_NOTARY_PROFILE
 
-readonly version="$(node -p "require('./package.json').version")"
-
 build_release() {
   local arch="$1"
   local app_path="out/Toddler Keys-darwin-${arch}/Toddler Keys.app"
-  local artifact_dir="out/make/zip/darwin/${arch}"
-  local artifact_path="${artifact_dir}/Toddler Keys-darwin-${arch}-${version}.zip"
+  local architecture_name
+  if [[ "$arch" == "arm64" ]]; then
+    architecture_name="Apple-Silicon"
+  else
+    architecture_name="Intel"
+  fi
+  local zip_dir="out/make/zip/darwin/${arch}"
+  local zip_path="${zip_dir}/Toddler-Keys-macOS-${architecture_name}.zip"
+  local dmg_dir="out/make/dmg/darwin/${arch}"
+  local dmg_path="${dmg_dir}/Toddler-Keys-macOS-${architecture_name}.dmg"
+  local dmg_contents
   local notary_dir
   local verify_dir
 
@@ -77,12 +84,30 @@ build_release() {
   xcrun stapler validate "$app_path"
   spctl --assess --type execute --verbose=4 "$app_path"
 
-  mkdir -p "$artifact_dir"
-  rm -f "$artifact_path"
-  ditto -c -k --sequesterRsrc --keepParent "$app_path" "$artifact_path"
+  mkdir -p "$zip_dir" "$dmg_dir"
+  rm -f "$zip_path" "$dmg_path"
+  ditto -c -k --sequesterRsrc --keepParent "$app_path" "$zip_path"
+
+  # A DMG gives Mac users the familiar drag-to-Applications installation flow.
+  # Build it only after the app has its final signature and stapled notary ticket.
+  dmg_contents="$(mktemp -d "/tmp/toddlerkeys-dmg-${arch}.XXXXXX")"
+  ditto "$app_path" "${dmg_contents}/Toddler Keys.app"
+  ln -s /Applications "${dmg_contents}/Applications"
+  hdiutil create \
+    -volname "Toddler Keys" \
+    -srcfolder "$dmg_contents" \
+    -ov \
+    -format UDZO \
+    "$dmg_path"
+  xcrun notarytool submit "$dmg_path" \
+    --keychain-profile "$notary_profile" \
+    --wait
+  xcrun stapler staple "$dmg_path"
+  xcrun stapler validate "$dmg_path"
+  spctl --assess --type open --context context:primary-signature --verbose=4 "$dmg_path"
 
   verify_dir="$(mktemp -d "/tmp/toddlerkeys-verify-${arch}.XXXXXX")"
-  ditto -x -k "$artifact_path" "$verify_dir"
+  ditto -x -k "$zip_path" "$verify_dir"
   codesign --verify --deep --strict --verbose=4 "${verify_dir}/Toddler Keys.app"
   spctl --assess --type execute --verbose=4 "${verify_dir}/Toddler Keys.app"
 }
@@ -92,4 +117,4 @@ npm run typecheck
 build_release arm64
 build_release x64
 
-print "Signed and notarized downloads are in out/make/zip/darwin/."
+print "Signed and notarized DMG and ZIP downloads are in out/make/."
