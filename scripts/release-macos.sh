@@ -99,6 +99,9 @@ build_release() {
     -ov \
     -format UDZO \
     "$dmg_path"
+  # The disk image needs its own signature for Gatekeeper's primary-signature check.
+  codesign --force --timestamp --sign "$signing_identity" "$dmg_path"
+  codesign --verify --strict --verbose=4 "$dmg_path"
   xcrun notarytool submit "$dmg_path" \
     --keychain-profile "$notary_profile" \
     --wait
