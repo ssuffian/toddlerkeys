@@ -30,6 +30,11 @@ Apple credentials stay in the local Mac Keychain; GitHub does not store them.
 
 1. Change `version` in `package.json` (for example, from `0.1.0` to `0.1.1`).
 2. Commit and push the finished changes to `main`.
-3. Run `npm run publish:mac` on the configured Mac.
+3. Publish either or both platforms when they are ready:
 
-That command tests the app, builds and notarizes DMG and ZIP downloads for both Mac architectures, and creates the GitHub release. Publishing the release automatically triggers GitHub to build Linux x64 and ARM64 Debian installers, attach them to the release, and publish the signed APT repository. The website's [download page](https://toddlerkeys.vercel.app/download/) provides the update-enabled Linux setup as well as direct downloads.
+   ```sh
+   npm run publish:mac
+   npm run publish:linux
+   ```
+
+The commands are independent and may run on different schedules while sharing the same version and GitHub release. The Mac command builds and notarizes both Mac architectures. The Linux command builds x64 and ARM64 Debian installers and publishes the signed APT repository. The website's [download page](https://toddlerkeys.vercel.app/download/) provides the update-enabled Linux setup as well as direct downloads.

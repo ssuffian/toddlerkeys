@@ -17,6 +17,7 @@
     "make:linux": "electron-forge make --platform=linux",
     "release:mac": "./scripts/release-macos.sh",
     "publish:mac": "./scripts/publish-macos.sh",
+    "publish:linux": "./scripts/publish-linux.sh",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

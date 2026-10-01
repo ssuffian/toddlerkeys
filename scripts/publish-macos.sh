@@ -37,10 +37,6 @@ if [[ -n "$oauth_scopes" && ",$oauth_scopes," != *workflow* ]]; then
 fi
 
 existing_release="$(gh release view "$tag" --repo "$repo" --json isDraft --jq '.isDraft' 2>/dev/null || true)"
-if [[ "$existing_release" == "false" && "$upload_only" == "false" ]]; then
-  print -u2 "${tag} is already published. Bump package.json's version for a new release."
-  exit 1
-fi
 
 if [[ "$upload_only" == "false" ]]; then
   ./scripts/release-macos.sh
@@ -73,6 +69,7 @@ print "Uploading ${tag}. If uploading fails, retry without rebuilding:"
 print "  npm run publish:mac -- --upload-only"
 
 if [[ -n "$existing_release" ]]; then
+  print "Adding Mac downloads to the existing shared ${tag} release."
   gh release upload "$tag" "${artifacts[@]}" --repo "$repo" --clobber
   if [[ "$existing_release" == "true" ]]; then
     gh release edit "$tag" --repo "$repo" --draft=false

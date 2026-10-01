@@ -34,7 +34,9 @@ Releases are signed and notarized locally, using the Apple credentials in your M
 
 Run `npm run release:mac` to test, build, sign, and notarize Apple silicon and Intel DMG downloads locally. It also produces ZIP fallbacks. The DMGs contain an Applications shortcut for the familiar drag-to-install flow, and both the app and final disk image are notarized and stapled.
 
-For a new release, bump the version in `package.json`, commit and push the changes, then run `npm run publish:mac`. It checks GitHub publishing access before building, then uploads both DMGs and both ZIP fallbacks to a GitHub Release. The release tag comes from the `version` in `package.json`. Publishing the release automatically starts the Linux workflow; no manual trigger is needed.
+For a new Mac release, bump the version in `package.json`, commit and push the changes, then run `npm run publish:mac`. It checks GitHub publishing access before building, then uploads both DMGs and both ZIP fallbacks to the shared GitHub Release. The release tag comes from the `version` in `package.json`. It does not start a Linux build.
+
+Mac and Linux use the same code version and GitHub release, but publish independently. Either platform can publish first; the other adds its downloads to that release later. Running a platform command again replaces only that platform's files.
 
 GitHub CLI (`gh`) must use an account with write access to `ssuffian/toddlerkeys`. Use `gh auth switch -h github.com -u ssuffian` to select the owner account. If the permission check asks for `workflow`, run `gh auth refresh -h github.com -s workflow` and approve in the browser while signed into that same account.
 
@@ -44,7 +46,7 @@ The release script explicitly refuses the Why Not Prosper team ID (`NGV7NNRRL2`)
 
 ## Linux downloads and automatic updates
 
-Publishing a GitHub release automatically runs `.github/workflows/release-linux.yml` on Ubuntu. It builds installable Debian packages for x64 PCs and ARM64 machines, attaches both to the same release, and publishes a signed APT repository to GitHub Pages. Installing the package registers the Toddler Keys launcher and icon with the desktop and preserves Electron's Linux sandbox helper permissions. Linux builds do not use the Apple certificate or notarization credentials.
+Run `npm run publish:linux` whenever the Linux version is ready. The GitHub workflow builds installable Debian packages for x64 PCs and ARM64 machines, attaches both to the shared release, and publishes the signed APT repository to GitHub Pages. It does not build or alter the Mac downloads. If Linux publishes first, the workflow creates the version tag and shared release from the current `main`; a later Mac publish adds its files. Installing the package registers the Toddler Keys launcher and icon with the desktop and preserves Electron's Linux sandbox helper permissions. Linux builds do not use the Apple certificate or notarization credentials.
 
 The repository signing key lives in the `APT_SIGNING_KEY` GitHub Actions secret. Its public half is committed at `packaging/apt/toddlerkeys-archive-keyring.gpg`. Keep that secret and public key together: replacing only one will make published repository metadata unverifiable. The release workflow requires GitHub Pages to use **GitHub Actions** as its build source.
 
@@ -52,6 +54,6 @@ Users add `https://ssuffian.github.io/toddlerkeys` once using the commands on th
 
 Release assets use stable names so `/download/` can link straight to the latest files without exposing the GitHub Releases interface. Keep those names in sync between the release scripts, Linux workflow, and download page.
 
-To rebuild Linux and republish the APT repository for an existing release, open **Actions > Release Linux app > Run workflow**, enter the existing tag such as `v0.1.3`, and run it. Locally, `npm run make:linux -- --arch=x64` runs the same Forge build when executed on Linux. `scripts/build-apt-repository.sh` can reproduce the repository layout on a machine with `dpkg-scanpackages` and GnuPG installed.
+To rebuild Linux and republish the APT repository for the version in `package.json`, run `npm run publish:linux`. You can also open **Actions > Release Linux app > Run workflow** and enter the current tag, such as `v0.1.4`. Locally, `npm run make:linux -- --arch=x64` runs the same Forge build when executed on Linux. `scripts/build-apt-repository.sh` can reproduce the repository layout on a machine with `dpkg-scanpackages` and GnuPG installed.
 
 Never put certificate files, passwords, or Apple credentials in this repository.
