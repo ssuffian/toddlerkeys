@@ -8,6 +8,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
     <link rel="icon" href="../icons/icon-192.png">
     <link rel="stylesheet" href="./download.css">
+    <script type="module" src="../download.js"></script>
     <title>Download Toddler Keys</title>
   </head>
   <body>
@@ -61,8 +62,12 @@
           </div>
         </div>
         <div class="install-steps" aria-label="Linux installation commands">
-          <p>Copy these commands into Terminal:</p>
-          <pre><code>curl -fsSL https://ssuffian.github.io/toddlerkeys/toddlerkeys-archive-keyring.gpg | sudo tee /usr/share/keyrings/toddlerkeys-archive-keyring.gpg &gt;/dev/null
+          <div class="install-heading">
+            <p>Copy these commands into Terminal:</p>
+            <button class="copy-button" id="copy-linux-install" type="button" aria-describedby="copy-status">Copy commands</button>
+            <span class="copy-status" id="copy-status" role="status" aria-live="polite"></span>
+          </div>
+          <pre><code id="linux-install-commands">curl -fsSL https://ssuffian.github.io/toddlerkeys/toddlerkeys-archive-keyring.gpg | sudo tee /usr/share/keyrings/toddlerkeys-archive-keyring.gpg &gt;/dev/null
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/toddlerkeys-archive-keyring.gpg] https://ssuffian.github.io/toddlerkeys stable main" | sudo tee /etc/apt/sources.list.d/toddlerkeys.list
 sudo apt update
 sudo apt install toddlerkeys</code></pre>

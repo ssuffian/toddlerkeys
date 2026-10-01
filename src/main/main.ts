@@ -8,6 +8,10 @@ import { Windows } from './windows';
 let windows: Windows | undefined;
 const controller = new SessionController(snapshot => windows?.update(snapshot));
 if (process.platform === 'linux') {
+  // Some Linux GPU/driver combinations crash Chromium's GPU process before a
+  // window can be shown. The app's simple 2D scenes remain smooth in software,
+  // which is more reliable across family laptops and older integrated GPUs.
+  app.disableHardwareAcceleration();
   // The kiosk relies on positioning, resizing, and refocusing windows. Electron
   // documents those controls as restricted under Wayland, so use XWayland for
   // the stronger desktop-app containment behavior.

@@ -1,4 +1,4 @@
-const CACHE = 'toddler-keys-v3';
+const CACHE = 'toddler-keys-v4';
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const APP_SHELL = [
   './download/',
   './download/index.html',
   './assets/download.css',
+  './download.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

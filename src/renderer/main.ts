@@ -29,12 +29,16 @@ const exitHintControl = select<HTMLInputElement>('#exit-hint');
 const lockdownControl = select<HTMLInputElement>('#lockdown');
 const playHint = select<HTMLElement>('#play-hint');
 const settingsStatus = select<HTMLElement>('#settings-status');
+const appVersion = select<HTMLElement>('#app-version');
 const scene = createScene(sceneRoot);
 const history = createKeyHistory(select<HTMLElement>('#key-history'));
 const sound = createSound();
 let latest: AppSnapshot | undefined;
 let lastState: AppSnapshot['state'] | undefined;
 let renderedSettings = '';
+
+appVersion.textContent = `v${__APP_VERSION__}`;
+appVersion.setAttribute('aria-label', `Toddler Keys version ${__APP_VERSION__}`);
 
 if (browserMode) {
   document.documentElement.dataset.runtime = 'browser';

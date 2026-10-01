@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite';
 import path from 'node:path';
+import packageJson from './package.json';
 
 export default defineConfig({
   root: 'src/renderer',
   base: './',
+  define: { __APP_VERSION__: JSON.stringify(packageJson.version) },
   build: {
     outDir: path.resolve(__dirname, 'dist'),
     emptyOutDir: true,

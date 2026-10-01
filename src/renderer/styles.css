@@ -58,6 +58,7 @@ button, input { font: inherit; }
 #start:disabled { background: #aeb9b3; box-shadow: none; cursor: default; }
 .quiet-button { min-height: 54px; padding: 0 18px; border: 0; border-radius: 15px; background: #ede8de; color: #566664; cursor: pointer; font-weight: 650; }
 button:focus-visible { outline: 3px solid rgba(214, 109, 74, .55); outline-offset: 3px; }
+.app-version { position: fixed; z-index: 40; right: 10px; bottom: 7px; color: rgba(47, 73, 70, .42); font-size: 10px; font-weight: 650; letter-spacing: .04em; pointer-events: none; user-select: none; }
 .save-status { height: 0; margin: 7px 0 -7px; color: #677a75; font-size: 11px; text-align: center; }
 .play-view { position: fixed; inset: 0; overflow: hidden; user-select: none; -webkit-user-select: none; cursor: default; background: radial-gradient(circle at 50% 45%, #fffaf0 0, #f6e8d4 62%, #eedbc2 100%); }
 .ambient-shape { position: absolute; border-radius: 45% 55% 60% 40%; opacity: .65; filter: blur(.5px); animation: drift 12s ease-in-out infinite alternate; }
