@@ -42,12 +42,16 @@ If building succeeded but uploading failed, fix the authentication or network is
 
 The release script explicitly refuses the Why Not Prosper team ID (`NGV7NNRRL2`) and will stop if personal team selection is ambiguous.
 
-## Linux downloads
+## Linux downloads and automatic updates
 
-Publishing a GitHub release automatically runs `.github/workflows/release-linux.yml` on Ubuntu. It builds installable Debian packages for x64 PCs and ARM64 machines and attaches both to the same release. Installing the package registers the Toddler Keys launcher and icon with the desktop and preserves Electron's Linux sandbox helper permissions. Linux builds do not use the Apple certificate or notarization credentials.
+Publishing a GitHub release automatically runs `.github/workflows/release-linux.yml` on Ubuntu. It builds installable Debian packages for x64 PCs and ARM64 machines, attaches both to the same release, and publishes a signed APT repository to GitHub Pages. Installing the package registers the Toddler Keys launcher and icon with the desktop and preserves Electron's Linux sandbox helper permissions. Linux builds do not use the Apple certificate or notarization credentials.
+
+The repository signing key lives in the `APT_SIGNING_KEY` GitHub Actions secret. Its public half is committed at `packaging/apt/toddlerkeys-archive-keyring.gpg`. Keep that secret and public key together: replacing only one will make published repository metadata unverifiable. The release workflow requires GitHub Pages to use **GitHub Actions** as its build source.
+
+Users add `https://ssuffian.github.io/toddlerkeys` once using the commands on the download page. After that, `apt upgrade` and graphical Ubuntu/Debian software updaters discover new Toddler Keys releases normally.
 
 Release assets use stable names so `/download/` can link straight to the latest files without exposing the GitHub Releases interface. Keep those names in sync between the release scripts, Linux workflow, and download page.
 
-To rebuild Linux for an existing release, open **Actions > Release Linux app > Run workflow**, enter the existing tag such as `v0.1.0`, and run it. Locally, `npm run make:linux -- --arch=x64` runs the same Forge build when executed on Linux.
+To rebuild Linux and republish the APT repository for an existing release, open **Actions > Release Linux app > Run workflow**, enter the existing tag such as `v0.1.3`, and run it. Locally, `npm run make:linux -- --arch=x64` runs the same Forge build when executed on Linux. `scripts/build-apt-repository.sh` can reproduce the repository layout on a machine with `dpkg-scanpackages` and GnuPG installed.
 
 Never put certificate files, passwords, or Apple credentials in this repository.

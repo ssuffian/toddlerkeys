@@ -7,7 +7,7 @@ Letters, numbers, and symbols create colorful play scenes. A recent-key row rein
 ## Ways to play
 
 - **Web/PWA:** [play at toddlerkeys.vercel.app](https://toddlerkeys.vercel.app), with installable best-effort fullscreen behavior.
-- **Desktop apps:** [choose the right Mac or Linux download](https://toddlerkeys.vercel.app/download/). The macOS builds are signed and notarized by Apple.
+- **Desktop apps:** [choose the right Mac or Linux install](https://toddlerkeys.vercel.app/download/). The macOS builds are signed and notarized by Apple, and Linux installs can update through APT.
 
 ## Development
 
@@ -32,4 +32,4 @@ Apple credentials stay in the local Mac Keychain; GitHub does not store them.
 2. Commit and push the finished changes to `main`.
 3. Run `npm run publish:mac` on the configured Mac.
 
-That command tests the app, builds and notarizes DMG and ZIP downloads for both Mac architectures, and creates the GitHub release. Publishing the release automatically triggers GitHub to build Linux x64 and ARM64 Debian installers and attach them to the same release. The website's [download page](https://toddlerkeys.vercel.app/download/) links directly to those files with plain-language architecture guidance.
+That command tests the app, builds and notarizes DMG and ZIP downloads for both Mac architectures, and creates the GitHub release. Publishing the release automatically triggers GitHub to build Linux x64 and ARM64 Debian installers, attach them to the release, and publish the signed APT repository. The website's [download page](https://toddlerkeys.vercel.app/download/) provides the update-enabled Linux setup as well as direct downloads.

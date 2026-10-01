@@ -11,6 +11,12 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: linux-release-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -48,3 +54,40 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: gh release upload "$RELEASE_TAG" out/release/Toddler-Keys-Linux-${{ matrix.arch }}.deb --clobber
+
+  publish-apt-repository:
+    name: Publish signed APT repository
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Toddler-Keys-Linux-*
+          path: out/release
+          merge-multiple: true
+
+      - name: Import repository signing key
+        env:
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+        run: printf '%s' "$APT_SIGNING_KEY" | gpg --batch --import
+
+      - name: Build signed repository
+        run: ./scripts/build-apt-repository.sh out/release out/apt-site packaging/apt/toddlerkeys-archive-keyring.gpg
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out/apt-site
+
+      - name: Publish repository
+        id: deployment
+        uses: actions/deploy-pages@v4

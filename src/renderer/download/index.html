@@ -56,20 +56,31 @@
           <span class="platform-mark linux-mark" aria-hidden="true">L</span>
           <div>
             <p class="platform-label">Ubuntu and Debian</p>
-            <h2 id="linux-heading">Download for Linux</h2>
-            <p>Download the DEB, open it, and choose Install. The package adds Toddler Keys to your app menu.</p>
+            <h2 id="linux-heading">Install on Linux</h2>
+            <p>Add the Toddler Keys package source once. New versions will then arrive with your normal system updates.</p>
           </div>
         </div>
-        <div class="choices">
-          <a class="download-button primary" href="https://github.com/ssuffian/toddlerkeys/releases/latest/download/Toddler-Keys-Linux-x64.deb">
-            <span>Linux x64</span>
-            <small>Most Intel and AMD computers</small>
-          </a>
-          <a class="download-button" href="https://github.com/ssuffian/toddlerkeys/releases/latest/download/Toddler-Keys-Linux-arm64.deb">
-            <span>Linux ARM64</span>
-            <small>ARM laptops and compatible devices</small>
-          </a>
+        <div class="install-steps" aria-label="Linux installation commands">
+          <p>Copy these commands into Terminal:</p>
+          <pre><code>curl -fsSL https://ssuffian.github.io/toddlerkeys/toddlerkeys-archive-keyring.gpg | sudo tee /usr/share/keyrings/toddlerkeys-archive-keyring.gpg &gt;/dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/toddlerkeys-archive-keyring.gpg] https://ssuffian.github.io/toddlerkeys stable main" | sudo tee /etc/apt/sources.list.d/toddlerkeys.list
+sudo apt update
+sudo apt install toddlerkeys</code></pre>
         </div>
+        <details>
+          <summary>Prefer a one-time download?</summary>
+          <p>These installers work without adding the update source. Choose x64 for most Intel and AMD computers, or ARM64 for an ARM device.</p>
+          <div class="choices compact-choices">
+            <a class="download-button" href="https://github.com/ssuffian/toddlerkeys/releases/latest/download/Toddler-Keys-Linux-x64.deb">
+              <span>Linux x64 DEB</span>
+              <small>Most Intel and AMD computers</small>
+            </a>
+            <a class="download-button" href="https://github.com/ssuffian/toddlerkeys/releases/latest/download/Toddler-Keys-Linux-arm64.deb">
+              <span>Linux ARM64 DEB</span>
+              <small>ARM laptops and compatible devices</small>
+            </a>
+          </div>
+        </details>
       </section>
 
       <p class="help">Toddler Keys is free, offline-friendly, and contains no ads or tracking.</p>
