@@ -34,7 +34,11 @@ Releases are signed and notarized locally, using the Apple credentials in your M
 
 Run `npm run release:mac` to test, build, sign, and notarize Apple silicon and Intel DMG downloads locally. It also produces ZIP fallbacks. The DMGs contain an Applications shortcut for the familiar drag-to-install flow, and both the app and final disk image are notarized and stapled.
 
-Run `npm run publish:mac` to do the same and upload both DMGs and both ZIP fallbacks to a GitHub Release. This requires the GitHub CLI (`gh`) to be signed in. The release tag comes from the `version` in `package.json`.
+For a new release, bump the version in `package.json`, commit and push the changes, then run `npm run publish:mac`. It checks GitHub publishing access before building, then uploads both DMGs and both ZIP fallbacks to a GitHub Release. The release tag comes from the `version` in `package.json`. Publishing the release automatically starts the Linux workflow; no manual trigger is needed.
+
+GitHub CLI (`gh`) must use an account with write access to `ssuffian/toddlerkeys`. Use `gh auth switch -h github.com -u ssuffian` to select the owner account. If the permission check asks for `workflow`, run `gh auth refresh -h github.com -s workflow` and approve in the browser while signed into that same account.
+
+If building succeeded but uploading failed, fix the authentication or network issue, then run `npm run publish:mac -- --upload-only`. This reuses the existing downloads without rebuilding or notarizing again, and resumes an incomplete draft release if one exists. The ZIP app versions must match `package.json`; rebuild after bumping the version.
 
 The release script explicitly refuses the Why Not Prosper team ID (`NGV7NNRRL2`) and will stop if personal team selection is ambiguous.
 
