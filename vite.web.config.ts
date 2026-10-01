@@ -15,7 +15,7 @@ export default defineConfig({
         download: path.resolve(__dirname, 'src/renderer/download/index.html'),
       },
       output: {
-        entryFileNames: 'assets/app.js',
+        entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',
         assetFileNames: 'assets/[name][extname]',
       },

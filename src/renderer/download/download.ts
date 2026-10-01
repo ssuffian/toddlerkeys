@@ -1,8 +1,8 @@
-const copyButton = document.querySelector('#copy-linux-install');
-const commands = document.querySelector('#linux-install-commands');
-const copyStatus = document.querySelector('#copy-status');
+const copyButton = document.querySelector<HTMLButtonElement>('#copy-linux-install');
+const commands = document.querySelector<HTMLElement>('#linux-install-commands');
+const copyStatus = document.querySelector<HTMLElement>('#copy-status');
 
-function fallbackCopy(text) {
+function fallbackCopy(text: string) {
   const textarea = document.createElement('textarea');
   textarea.value = text;
   textarea.setAttribute('readonly', '');
