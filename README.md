@@ -20,6 +20,8 @@ Run the browser version with `npm run build:web` and `npm run preview:web`. Run 
 Release and Apple signing setup are documented in [`docs/releasing.md`](docs/releasing.md).
 For the strongest practical Mac containment, follow the one-time [`macOS kiosk setup`](docs/macos-kiosk-setup.md).
 
+Lockdown mode prevents app-level exits and zooming. Operating-system shortcuts are outside an ordinary app's control; on Linux, desktop features such as screenshots may remain available and require a separately restricted OS session for complete kiosk containment.
+
 ## Publishing a new version
 
 Apple credentials stay in the local Mac Keychain; GitHub does not store them.

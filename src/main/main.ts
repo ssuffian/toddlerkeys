@@ -7,9 +7,15 @@ import { Windows } from './windows';
 
 let windows: Windows | undefined;
 const controller = new SessionController(snapshot => windows?.update(snapshot));
-// Match the generated Debian desktop entry so Linux desktops associate the
-// window with the installed launcher and display its icon instead of a fallback.
-if (process.platform === 'linux') app.setDesktopName('toddlerkeys.desktop');
+if (process.platform === 'linux') {
+  // The kiosk relies on positioning, resizing, and refocusing windows. Electron
+  // documents those controls as restricted under Wayland, so use XWayland for
+  // the stronger desktop-app containment behavior.
+  app.commandLine.appendSwitch('ozone-platform', 'x11');
+  // Match the generated Debian desktop entry so Linux desktops associate the
+  // window with the installed launcher and display its icon instead of a fallback.
+  app.setDesktopName('toddlerkeys.desktop');
+}
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', () => windows?.focus());

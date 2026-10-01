@@ -60,6 +60,11 @@ export class Windows {
   }
   private displaysChanged = () => { this.discontinuity(); if (this.controller.active) this.refreshDisplays(); };
   private secure(contents: WebContents) {
+    // Electron 44's disabled zoom mode covers keyboard and wheel zoom. Pinch
+    // zoom is controlled separately, so lock its visual scale as well.
+    contents.setZoomMode('disabled');
+    contents.setZoomFactor(1);
+    void contents.setVisualZoomLevelLimits(1, 1);
     contents.setWindowOpenHandler(() => ({ action: 'deny' }));
     contents.on('will-navigate', event => event.preventDefault());
     contents.on('will-frame-navigate', event => event.preventDefault());
