@@ -63,7 +63,9 @@ function render(snapshot: AppSnapshot) {
   playExitProgress.hidden = snapshot.state !== 'playing' || unlock.phase !== 'holding';
   playExitProgress.style.setProperty('--hold-progress', `${holdPercent}%`);
   progress.textContent = unlock.phase === 'holding'
-    ? `Keep holding… ${Math.max(1, Math.ceil((1 - unlock.holdProgress) * 2))}`
+    ? unlock.holdProgress >= 1
+      ? `Release the keys to ${snapshot.state === 'setup' ? 'finish' : 'exit'}.`
+      : `Keep holding… ${Math.max(1, Math.ceil((1 - unlock.holdProgress) * 2))}`
     : snapshot.practiced ? 'Practice complete. You’re ready.' : 'Try the sequence now.';
 
   const settingsKey = JSON.stringify(snapshot.settings);

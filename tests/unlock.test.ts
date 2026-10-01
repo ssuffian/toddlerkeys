@@ -17,13 +17,22 @@ describe('parent unlock recognizer', () => {
     expect(unlock.progress()).toEqual({ phase: 'idle', holdProgress: 0 });
   });
 
-  it('arms from the K event modifier flags without separate modifier events', () => {
+  it('arms from the K event modifier flags and requires later hold evidence', () => {
     const unlock = createUnlockRecognizer();
     unlock.input(key({ type: 'down', code: 'KeyK', key: 'k', control: true, shift: true, at: 100 }));
     expect(unlock.progress().phase).toBe('holding');
     unlock.tick(1100);
     expect(unlock.progress().holdProgress).toBeCloseTo(0.5);
-    expect(unlock.tick(2100)).toBe(true);
+    expect(unlock.tick(2100)).toBe(false);
+    expect(unlock.input(key({ type: 'down', code: 'KeyK', key: 'k', control: true, shift: true, repeat: true, at: 2100 }))).toBe(true);
+  });
+
+  it('never completes from elapsed time alone after a quick chord tap', () => {
+    const unlock = beginChord();
+    expect(unlock.tick(3000)).toBe(false);
+    expect(unlock.progress()).toEqual({ phase: 'holding', holdProgress: 1 });
+    unlock.input(key({ type: 'down', code: 'KeyA', key: 'a', at: 3001 }));
+    expect(unlock.progress().phase).toBe('idle');
   });
 
   it('does not complete before the full hold duration', () => {
@@ -32,6 +41,11 @@ describe('parent unlock recognizer', () => {
     expect(unlock.progress().phase).toBe('holding');
     unlock.input(key({ type: 'up', code: 'KeyK', key: 'k', control: true, shift: true, at: 1999 }));
     expect(unlock.progress().phase).toBe('idle');
+  });
+
+  it('completes when a chord key is released after the full duration', () => {
+    const unlock = beginChord();
+    expect(unlock.input(key({ type: 'up', code: 'ShiftLeft', key: 'Shift', control: true, shift: false, at: 2000 }))).toBe(true);
   });
 
   it('cancels when K or either modifier is released', () => {

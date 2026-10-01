@@ -9,6 +9,10 @@ export interface UnlockRecognizer {
 
 const HOLD_MS = 2000;
 const isK = (event: PhysicalInput) => event.code === 'KeyK' || event.key.toLowerCase() === 'k';
+const isRequiredKey = (event: PhysicalInput) => isK(event)
+  || event.code.startsWith('Control') || event.code.startsWith('Shift');
+const hasRequiredModifiers = (event: PhysicalInput) => event.control && event.shift
+  && !event.meta && !event.alt;
 
 export function isUnlockStart(event: PhysicalInput): boolean {
   return event.type === 'down' && !event.repeat && isK(event)
@@ -28,10 +32,8 @@ export function createUnlockRecognizer(): UnlockRecognizer {
       return false;
     }
     now = at;
-    if (phase === 'holding' && now - holdAt >= HOLD_MS) {
-      reset();
-      return true;
-    }
+    // Time updates the progress display, but cannot prove the keys are still
+    // physically held. Completion requires a later keyboard event below.
     return false;
   };
 
@@ -54,14 +56,34 @@ export function createUnlockRecognizer(): UnlockRecognizer {
         return false;
       }
 
-      // Once armed, releasing K or either modifier, or adding another
-      // modifier/key, cancels the attempt. Repeated K events are harmless.
-      if (event.repeat && isK(event)) return false;
-      if (!event.control || !event.shift || event.meta || event.alt || event.type === 'up' && isK(event)) {
+      const heldLongEnough = now - holdAt >= HOLD_MS;
+
+      // A repeat is evidence that K is still physically down. This preserves
+      // automatic completion on systems with key repeat enabled.
+      if (event.repeat && isK(event)) {
+        if (!hasRequiredModifiers(event)) {
+          reset();
+          return false;
+        }
+        if (heldLongEnough) {
+          reset();
+          return true;
+        }
+        return false;
+      }
+
+      // Releasing one of the chord keys proves how long it was actually held.
+      // This also works when OS-level key repeat is disabled.
+      if (event.type === 'up' && isRequiredKey(event)) {
+        reset();
+        return heldLongEnough;
+      }
+
+      if (!hasRequiredModifiers(event)) {
         reset();
         return false;
       }
-      if (event.type === 'down' && !isK(event)) reset();
+      if (event.type === 'down') reset();
       return false;
     },
   };

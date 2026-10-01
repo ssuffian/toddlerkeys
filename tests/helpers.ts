@@ -13,5 +13,6 @@ export function enterChord(target: { input(event: PhysicalInput): unknown; tick(
   target.input(key({ type: 'down', code: 'ControlLeft', key: 'Control', control: true, at }));
   target.input(key({ type: 'down', code: 'ShiftLeft', key: 'Shift', control: true, shift: true, at }));
   target.input(key({ type: 'down', code: 'KeyK', key: 'k', control: true, shift: true, at }));
-  return Boolean(target.tick(at + 2000));
+  target.tick(at + 2000);
+  return Boolean(target.input(key({ type: 'up', code: 'KeyK', key: 'k', control: true, shift: true, at: at + 2000 })));
 }
