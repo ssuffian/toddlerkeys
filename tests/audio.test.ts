@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { PlayKey, Settings } from '../src/shared/contracts';
-import { ToneScheduler } from '../src/renderer/audio';
+import { spokenKey, ToneScheduler } from '../src/renderer/audio';
 
-const settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: false };
+const settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: false };
 const event = (index: number, phase: PlayKey['phase'] = 'down'): PlayKey => ({ phase, code: `Key${index}`, label: 'A', category: 'letter', colorIndex: index % 8, at: index });
 
 describe('tone scheduler', () => {
@@ -11,6 +11,15 @@ describe('tone scheduler', () => {
     expect(scheduler.accept(event(1), { ...settings, sound: false })).toBeNull();
     expect(scheduler.accept(event(1), { ...settings, volume: 0 })).toBeNull();
     expect(scheduler.accept(event(1, 'up'), settings)).toBeNull();
+    expect(scheduler.accept(event(1), { ...settings, audioMode: 'speech' })).toBeNull();
+  });
+
+  it('speaks letters, numbers, and symbols but ignores control keys', () => {
+    expect(spokenKey(event(1))).toBe('A');
+    expect(spokenKey({ ...event(1), label: '7', category: 'number' })).toBe('7');
+    expect(spokenKey({ ...event(1), label: '?', category: 'symbol' })).toBe('question mark');
+    expect(spokenKey({ ...event(1), label: 'Ctrl', category: 'control' })).toBeNull();
+    expect(spokenKey(event(1, 'up'))).toBeNull();
   });
 
   it('allows at most four live voices and eight starts per second without queuing', () => {

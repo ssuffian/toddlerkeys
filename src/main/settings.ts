@@ -1,9 +1,10 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { Instrument, Settings } from '../shared/contracts';
+import type { AudioMode, Instrument, Settings } from '../shared/contracts';
 
 const instruments = new Set<Instrument>(['marimba', 'piano', 'bells', 'softSynth']);
-export const defaultSettings = (reducedMotion = false): Settings => ({ sound: true, volume: 0.15, instrument: 'marimba', reducedMotion, lockdownMode: false, showExitHint: true });
+const audioModes = new Set<AudioMode>(['tones', 'speech']);
+export const defaultSettings = (reducedMotion = false): Settings => ({ sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', reducedMotion, lockdownMode: false, showExitHint: true });
 
 export function sanitizeSettings(value: unknown, fallback: Settings): Settings {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...fallback };
@@ -11,6 +12,7 @@ export function sanitizeSettings(value: unknown, fallback: Settings): Settings {
   if (typeof candidate.sound !== 'boolean' || typeof candidate.reducedMotion !== 'boolean' || typeof candidate.volume !== 'number' || !Number.isFinite(candidate.volume)) return { ...fallback };
   return {
     sound: candidate.sound,
+    audioMode: typeof candidate.audioMode === 'string' && audioModes.has(candidate.audioMode as AudioMode) ? candidate.audioMode as AudioMode : fallback.audioMode,
     volume: Math.max(0, Math.min(1, candidate.volume)),
     instrument: typeof candidate.instrument === 'string' && instruments.has(candidate.instrument as Instrument) ? candidate.instrument as Instrument : 'marimba',
     reducedMotion: candidate.reducedMotion,

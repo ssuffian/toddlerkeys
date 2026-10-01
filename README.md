@@ -2,6 +2,8 @@
 
 A gentle, offline-friendly keyboard play space for young children.
 
+Letters, numbers, and symbols create colorful play scenes. A recent-key row reinforces letter and number sequences, and parents can choose musical tones or spoken key names. Modifier and other control keys are ignored during play.
+
 ## Ways to play
 
 - **Web/PWA:** [play at toddlerkeys.vercel.app](https://toddlerkeys.vercel.app), with installable best-effort fullscreen behavior.

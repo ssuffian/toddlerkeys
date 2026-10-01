@@ -20,7 +20,7 @@ export class ToneScheduler {
     const now = this.now();
     this.starts = this.starts.filter(start => now - start < 1000);
     this.ends = this.ends.filter(end => end > now);
-    if (this.stopped || key.phase !== 'down' || !settings.sound || settings.volume <= 0 || this.starts.length >= MAX_STARTS_PER_SECOND || this.ends.length >= MAX_VOICES) return null;
+    if (this.stopped || key.phase !== 'down' || !settings.sound || settings.audioMode !== 'tones' || settings.volume <= 0 || this.starts.length >= MAX_STARTS_PER_SECOND || this.ends.length >= MAX_VOICES) return null;
     const preset = PRESETS[settings.instrument];
     this.starts.push(now);
     this.ends.push(now + preset.duration * 1000);
@@ -41,9 +41,23 @@ export interface Sound {
   dispose(): void;
 }
 
+const SYMBOL_NAMES: Readonly<Record<string, string>> = {
+  '!': 'exclamation mark', '@': 'at sign', '#': 'hash', '$': 'dollar sign', '%': 'percent',
+  '^': 'caret', '&': 'ampersand', '*': 'asterisk', '(': 'left parenthesis', ')': 'right parenthesis',
+  '-': 'minus', '_': 'underscore', '=': 'equals', '+': 'plus', '[': 'left bracket', ']': 'right bracket',
+  '{': 'left brace', '}': 'right brace', '\\': 'backslash', '|': 'vertical bar', ';': 'semicolon',
+  ':': 'colon', "'": 'apostrophe', '"': 'quotation mark', ',': 'comma', '.': 'period',
+  '<': 'less than', '>': 'greater than', '/': 'slash', '?': 'question mark', '`': 'backtick', '~': 'tilde',
+};
+
+export function spokenKey(key: PlayKey): string | null {
+  if (key.phase !== 'down' || key.category === 'control') return null;
+  return key.category === 'symbol' ? SYMBOL_NAMES[key.label] ?? key.label : key.label;
+}
+
 export function createSound(): Sound {
   let context: AudioContext | undefined;
-  let settings: Settings = { sound: true, volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: true };
+  let settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: true };
   let scheduler = new ToneScheduler();
   const voices = new Set<OscillatorNode>();
 
@@ -55,17 +69,32 @@ export function createSound(): Sound {
     for (const voice of voices) { try { voice.stop(); } catch { /* already stopped */ } }
     voices.clear();
   };
+  const stopSpeech = () => { try { window.speechSynthesis?.cancel(); } catch { /* speech remains optional */ } };
+  const speak = (key: PlayKey) => {
+    const text = spokenKey(key);
+    if (!text || !settings.sound || settings.volume <= 0 || !('speechSynthesis' in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.86;
+    utterance.pitch = 1.08;
+    utterance.volume = settings.volume;
+    const voices = window.speechSynthesis.getVoices();
+    utterance.voice = voices.find(voice => voice.localService && voice.lang.toLowerCase().startsWith('en')) ?? null;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  };
 
   return {
     async unlock() {
       if (!settings.sound) return;
       scheduler.start();
+      if (settings.audioMode === 'speech') return;
       try {
         const audio = ensureContext();
         if (audio.state === 'suspended') await audio.resume();
       } catch { /* sound remains optional */ }
     },
     accept(key) {
+      if (settings.audioMode === 'speech') { speak(key); return; }
       try {
         const audio = ensureContext();
         // A suspended context freezes its clock. Discard input until it resumes
@@ -88,8 +117,12 @@ export function createSound(): Sound {
         oscillator.stop(start + tone.duration);
       } catch { /* unsupported or unavailable audio continues silently */ }
     },
-    configure(next) { settings = { ...next }; if (!settings.sound || settings.volume <= 0) stopVoices(); },
-    stop() { scheduler.stop(); stopVoices(); },
-    dispose() { scheduler.stop(); stopVoices(); if (context) void context.close(); context = undefined; },
+    configure(next) {
+      const modeChanged = next.audioMode !== settings.audioMode;
+      settings = { ...next };
+      if (modeChanged || !settings.sound || settings.volume <= 0) { stopVoices(); stopSpeech(); }
+    },
+    stop() { scheduler.stop(); stopVoices(); stopSpeech(); },
+    dispose() { scheduler.stop(); stopVoices(); stopSpeech(); if (context) void context.close(); context = undefined; },
   };
 }

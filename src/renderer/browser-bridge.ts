@@ -1,10 +1,11 @@
 import { SessionController } from '../main/session';
 import type { AppSnapshot, PhysicalInput, PlayKey, Settings, ToddlerKeysBridge } from '../shared/contracts';
-import { normalizeKey } from '../shared/keys';
+import { normalizePlayableKey } from '../shared/keys';
 
 const SETTINGS_KEY = 'toddler-keys-settings';
 const defaults = (): Settings => ({
   sound: true,
+  audioMode: 'tones',
   volume: 0.15,
   instrument: 'marimba',
   reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -72,7 +73,7 @@ export function createBrowserBridge(): ToddlerKeysBridge {
     if (unlockWasArmed || unlockIsArmed || physical.control && physical.shift) event.preventDefault();
 
     if (before.state === 'playing' && after.state === 'playing' && !unlockWasArmed && !unlockIsArmed && (!physical.repeat || type === 'up')) {
-      const normalized = normalizeKey(physical);
+      const normalized = normalizePlayableKey(physical);
       if (normalized) for (const callback of keys) callback(normalized);
     }
   };

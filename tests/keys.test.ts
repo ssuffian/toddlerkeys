@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeKey } from '../src/shared/keys';
+import { normalizeKey, normalizePlayableKey } from '../src/shared/keys';
 import { key } from './helpers';
 
 describe('key normalization', () => {
@@ -29,5 +29,12 @@ describe('key normalization', () => {
     expect(first.colorIndex).toBe(shifted.colorIndex);
     expect(first.colorIndex).toBeGreaterThanOrEqual(0);
     expect(first.colorIndex).toBeLessThan(8);
+  });
+
+  it('filters control keys out of the play experience', () => {
+    expect(normalizePlayableKey(key({ type: 'down', code: 'ControlLeft', key: 'Control' }))).toBeNull();
+    expect(normalizePlayableKey(key({ type: 'down', code: 'ArrowLeft', key: 'ArrowLeft' }))).toBeNull();
+    expect(normalizePlayableKey(key({ type: 'down', code: 'KeyA', key: 'a' }))).toMatchObject({ label: 'a', category: 'letter' });
+    expect(normalizePlayableKey(key({ type: 'down', code: 'Slash', key: '?' }))).toMatchObject({ label: '?', category: 'symbol' });
   });
 });

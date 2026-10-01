@@ -38,3 +38,8 @@ export function normalizeKey(input: PhysicalInput): PlayKey | null {
 
   return { phase: input.type, code: input.code, label, category, colorIndex: stableColor(input.code), at: input.at };
 }
+
+export function normalizePlayableKey(input: PhysicalInput): PlayKey | null {
+  const key = normalizeKey(input);
+  return key?.category === 'control' ? null : key;
+}

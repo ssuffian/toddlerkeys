@@ -3,6 +3,7 @@ import type { AppSnapshot, Settings } from '../shared/contracts';
 import { createScene } from './scene';
 import { createSound } from './audio';
 import { createBrowserBridge } from './browser-bridge';
+import { createKeyHistory } from './history';
 
 const electronBridge = window.toddlerKeys;
 const browserMode = !electronBridge;
@@ -18,7 +19,9 @@ const progress = select<HTMLElement>('#progress');
 const holdMeter = select<HTMLElement>('#hold-meter');
 const playExitProgress = select<HTMLElement>('#play-exit-progress');
 const soundControl = select<HTMLInputElement>('#sound');
+const audioModeControl = select<HTMLSelectElement>('#audio-mode');
 const instrumentControl = select<HTMLSelectElement>('#instrument');
+const instrumentRow = select<HTMLElement>('#instrument-row');
 const volumeControl = select<HTMLInputElement>('#volume');
 const volumeValue = select<HTMLOutputElement>('#volume-value');
 const motionControl = select<HTMLInputElement>('#motion');
@@ -27,6 +30,7 @@ const lockdownControl = select<HTMLInputElement>('#lockdown');
 const playHint = select<HTMLElement>('#play-hint');
 const settingsStatus = select<HTMLElement>('#settings-status');
 const scene = createScene(sceneRoot);
+const history = createKeyHistory(select<HTMLElement>('#key-history'));
 const sound = createSound();
 let latest: AppSnapshot | undefined;
 let lastState: AppSnapshot['state'] | undefined;
@@ -41,7 +45,7 @@ if (browserMode) {
 }
 
 function readControls(): Settings {
-  return { sound: soundControl.checked, volume: Number(volumeControl.value), instrument: instrumentControl.value as Settings['instrument'], reducedMotion: motionControl.checked, lockdownMode: lockdownControl.checked, showExitHint: exitHintControl.checked };
+  return { sound: soundControl.checked, audioMode: audioModeControl.value as Settings['audioMode'], volume: Number(volumeControl.value), instrument: instrumentControl.value as Settings['instrument'], reducedMotion: motionControl.checked, lockdownMode: lockdownControl.checked, showExitHint: exitHintControl.checked };
 }
 
 function render(snapshot: AppSnapshot) {
@@ -66,7 +70,11 @@ function render(snapshot: AppSnapshot) {
   if (settingsKey !== renderedSettings) {
     renderedSettings = settingsKey;
     soundControl.checked = snapshot.settings.sound;
+    audioModeControl.value = snapshot.settings.audioMode;
     instrumentControl.value = snapshot.settings.instrument;
+    audioModeControl.disabled = !snapshot.settings.sound;
+    instrumentControl.disabled = !snapshot.settings.sound || snapshot.settings.audioMode === 'speech';
+    instrumentRow.classList.toggle('muted-setting', snapshot.settings.audioMode === 'speech');
     volumeControl.value = String(snapshot.settings.volume);
     volumeValue.value = `${Math.round(snapshot.settings.volume * 100)}%`;
     motionControl.checked = snapshot.settings.reducedMotion;
@@ -78,8 +86,8 @@ function render(snapshot: AppSnapshot) {
   }
   if (lastState !== snapshot.state) {
     document.body.dataset.view = snapshot.state;
-    if (snapshot.state === 'playing') void sound.unlock();
-    else { sound.stop(); scene.clear(); }
+    if (snapshot.state === 'playing') { history.clear(); void sound.unlock(); }
+    else { sound.stop(); scene.clear(); history.clear(); }
     lastState = snapshot.state;
   }
 }
@@ -92,11 +100,17 @@ async function saveControls() {
 }
 
 bridge.onSnapshot(render);
-bridge.onKey(key => { scene.accept(key); sound.accept(key); });
+bridge.onKey(key => { scene.accept(key); history.accept(key); sound.accept(key); });
 void bridge.getSnapshot().then(render);
 start.addEventListener('click', () => { void sound.unlock(); void bridge.start(); });
 select<HTMLButtonElement>('#quit').addEventListener('click', () => { void bridge.quitFromSetup(); });
 soundControl.addEventListener('change', () => { sound.configure(readControls()); void saveControls(); });
+audioModeControl.addEventListener('change', async () => {
+  sound.configure(readControls());
+  await sound.unlock();
+  sound.accept({ phase: 'down', code: 'SoundPreview', label: 'A', category: 'letter', colorIndex: 4, at: performance.now() });
+  void saveControls();
+});
 instrumentControl.addEventListener('change', async () => {
   sound.configure(readControls());
   await sound.unlock();
