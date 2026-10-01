@@ -12,10 +12,13 @@ if (process.platform === 'linux') {
   // window can be shown. The app's simple 2D scenes remain smooth in software,
   // which is more reliable across family laptops and older integrated GPUs.
   app.disableHardwareAcceleration();
-  // The kiosk relies on positioning, resizing, and refocusing windows. Electron
-  // documents those controls as restricted under Wayland, so use XWayland for
-  // the stronger desktop-app containment behavior.
-  app.commandLine.appendSwitch('ozone-platform', 'x11');
+  // Match Chromium's display backend to the desktop session. Forcing XWayland
+  // can create an invisible window on Wayland-only systems, while forcing
+  // Wayland prevents the app from opening on traditional X11 desktops.
+  const displayBackend = process.env.XDG_SESSION_TYPE === 'wayland' || process.env.WAYLAND_DISPLAY
+    ? 'wayland'
+    : 'x11';
+  app.commandLine.appendSwitch('ozone-platform', displayBackend);
   // Match the generated Debian desktop entry so Linux desktops associate the
   // window with the installed launcher and display its icon instead of a fallback.
   app.setDesktopName('toddlerkeys.desktop');

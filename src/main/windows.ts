@@ -9,7 +9,9 @@ const recoveryDocument = `<!doctype html><html><head><meta http-equiv="Content-S
 const recoveryURL = `data:text/html;charset=utf-8,${encodeURIComponent(recoveryDocument)}`;
 const preferences = { nodeIntegration: false, contextIsolation: true, sandbox: true, devTools: false, webSecurity: true };
 const windowIcon = process.platform === 'linux'
-  ? path.join(app.getAppPath(), 'assets/AppIcon.iconset/icon_512x512.png')
+  ? app.isPackaged
+    ? '/usr/share/pixmaps/toddlerkeys.png'
+    : path.join(app.getAppPath(), 'assets/AppIcon.iconset/icon_512x512.png')
   : undefined;
 
 export class Windows {
