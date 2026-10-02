@@ -57,7 +57,7 @@ export function spokenKey(key: PlayKey): string | null {
 
 export function createSound(): Sound {
   let context: AudioContext | undefined;
-  let settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', reducedMotion: false, lockdownMode: false, showExitHint: true };
+  let settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: true };
   let scheduler = new ToneScheduler();
   const voices = new Set<OscillatorNode>();
 

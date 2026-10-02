@@ -1,16 +1,15 @@
-import type { PlayKey } from '../shared/contracts';
+import type { PictureTheme, PlayKey } from '../shared/contracts';
 import { LETTER_PICTURES } from './letter-pictures';
 
 export const MAX_BUBBLES = 9;
 export const MAX_PARTICLES = 64;
-export const MAX_PICTURES = 4;
-export const PICTURE_MS = 2000;
+export const MAX_PICTURES = 1;
 const TRAIL_MS = 1800;
 const PARTICLE_MS = 720;
 
 export type SceneBubble = PlayKey & { id: number; bornAt: number; expiresAt: number; held: boolean };
 export type SceneParticle = { id: number; colorIndex: number; bornAt: number; expiresAt: number; angle: number; distance: number };
-export type ScenePicture = { id: number; letter: string; icon: string; word: string; slot: number; bornAt: number; expiresAt: number };
+export type ScenePicture = { id: number; letter: string; icon: string; word: string; slot: number };
 
 export class SceneState {
   bubbles: SceneBubble[] = [];
@@ -20,7 +19,7 @@ export class SceneState {
   private held = new Map<string, number>();
   constructor(private readonly now: () => number = () => performance.now(), private readonly random: () => number = Math.random) {}
 
-  accept(key: PlayKey, reducedMotion = false): void {
+  accept(key: PlayKey, reducedMotion = false, pictureTheme: PictureTheme = 'mixed'): void {
     const now = this.now();
     this.sweep(now);
     if (key.phase === 'up') {
@@ -31,15 +30,16 @@ export class SceneState {
       return;
     }
 
-    const letter = key.label.length === 1 ? key.label.toUpperCase() : '';
-    const choices = LETTER_PICTURES[letter];
-    if (choices) {
-      const choice = choices[Math.floor(this.random() * choices.length) % choices.length];
-      const occupiedSlots = new Set(this.pictures.map(picture => picture.slot));
-      const availableSlots = Array.from({ length: 8 }, (_, slot) => slot).filter(slot => !occupiedSlots.has(slot));
-      const slot = availableSlots[Math.floor(this.random() * availableSlots.length) % availableSlots.length];
-      this.pictures.push({ id: ++this.sequence, letter, ...choice, slot, bornAt: now, expiresAt: now + PICTURE_MS });
-      if (this.pictures.length > MAX_PICTURES) this.pictures.splice(0, this.pictures.length - MAX_PICTURES);
+    // A picture belongs to the current printed key. Replace it on every new
+    // keypress, and leave it in place until another key is printed.
+    this.pictures = [];
+    const letter = key.category === 'letter' && key.label.length === 1 ? key.label.toUpperCase() : '';
+    const choice = LETTER_PICTURES[pictureTheme][letter];
+    if (choice) {
+      // Keep pictures in the upper and middle side slots, away from the recent
+      // key strip along the bottom of the play space.
+      const slot = Math.floor(this.random() * 4) % 4;
+      this.pictures.push({ id: ++this.sequence, letter, ...choice, slot });
     }
 
     const previousForCode = this.held.get(key.code);
@@ -67,11 +67,10 @@ export class SceneState {
   sweep(now = this.now()): void {
     this.bubbles = this.bubbles.filter(bubble => bubble.expiresAt > now);
     this.particles = this.particles.filter(particle => particle.expiresAt > now);
-    this.pictures = this.pictures.filter(picture => picture.expiresAt > now);
   }
 
   get animating(): boolean {
-    return this.particles.length > 0 || this.pictures.length > 0 || this.bubbles.some(bubble => Number.isFinite(bubble.expiresAt));
+    return this.particles.length > 0 || this.bubbles.some(bubble => Number.isFinite(bubble.expiresAt));
   }
 
   clear(): void { this.bubbles = []; this.particles = []; this.pictures = []; this.held.clear(); }
@@ -80,6 +79,7 @@ export class SceneState {
 export interface Scene {
   accept(key: PlayKey): void;
   setReducedMotion(enabled: boolean): void;
+  setPictureTheme(theme: PictureTheme): void;
   clear(): void;
   dispose(): void;
 }
@@ -87,6 +87,7 @@ export interface Scene {
 export function createScene(root: HTMLElement): Scene {
   const state = new SceneState();
   let reducedMotion = false;
+  let pictureTheme: PictureTheme = 'mixed';
   let frame = 0;
   let disposed = false;
   root.innerHTML = '<div class="scene-glow" aria-hidden="true"></div><div class="picture-layer"></div><div class="bubble-layer"></div><div class="particle-layer" aria-hidden="true"></div><p class="key-announcer" aria-live="polite" aria-atomic="true"></p>';
@@ -119,7 +120,6 @@ export function createScene(root: HTMLElement): Scene {
         pictureElements.set(picture.id, element);
         pictureLayer.append(element);
       }
-      element.style.opacity = String(Math.min(1, Math.max(0, (picture.expiresAt - now) / 400)));
     });
     const latestId = state.bubbles.at(-1)?.id;
     const bubbleIds = new Set(state.bubbles.map(bubble => bubble.id));
@@ -178,7 +178,7 @@ export function createScene(root: HTMLElement): Scene {
 
   return {
     accept(key) {
-      state.accept(key, reducedMotion);
+      state.accept(key, reducedMotion, pictureTheme);
       if (key.phase === 'down') announcer.textContent = key.label;
       render();
       requestAnimation();
@@ -189,6 +189,7 @@ export function createScene(root: HTMLElement): Scene {
       if (enabled) state.particles = [];
       render();
     },
+    setPictureTheme(theme) { pictureTheme = theme; },
     clear() { state.clear(); pictureLayer.replaceChildren(); bubbleLayer.replaceChildren(); particleLayer.replaceChildren(); pictureElements.clear(); bubbleElements.clear(); particleElements.clear(); announcer.textContent = ''; },
     dispose() { disposed = true; if (frame) cancelAnimationFrame(frame); state.clear(); pictureElements.clear(); bubbleElements.clear(); particleElements.clear(); root.replaceChildren(); },
   };

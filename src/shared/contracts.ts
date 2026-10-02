@@ -10,7 +10,8 @@ export type UnlockProgress = {
 };
 export type Instrument = 'marimba' | 'piano' | 'bells' | 'softSynth';
 export type AudioMode = 'tones' | 'speech';
-export type Settings = { sound: boolean; audioMode: AudioMode; volume: number; instrument: Instrument; reducedMotion: boolean; lockdownMode: boolean; showExitHint: boolean };
+export type PictureTheme = 'mixed' | 'animals' | 'food' | 'transport';
+export type Settings = { sound: boolean; audioMode: AudioMode; volume: number; instrument: Instrument; pictureTheme: PictureTheme; reducedMotion: boolean; lockdownMode: boolean; showExitHint: boolean };
 export type PlayKey = {
   phase: 'down' | 'up';
   code: string;

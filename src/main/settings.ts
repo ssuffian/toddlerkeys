@@ -1,10 +1,11 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { AudioMode, Instrument, Settings } from '../shared/contracts';
+import type { AudioMode, Instrument, PictureTheme, Settings } from '../shared/contracts';
 
 const instruments = new Set<Instrument>(['marimba', 'piano', 'bells', 'softSynth']);
 const audioModes = new Set<AudioMode>(['tones', 'speech']);
-export const defaultSettings = (reducedMotion = false): Settings => ({ sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', reducedMotion, lockdownMode: false, showExitHint: true });
+const pictureThemes = new Set<PictureTheme>(['mixed', 'animals', 'food', 'transport']);
+export const defaultSettings = (reducedMotion = false): Settings => ({ sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion, lockdownMode: false, showExitHint: true });
 
 export function sanitizeSettings(value: unknown, fallback: Settings): Settings {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...fallback };
@@ -15,6 +16,7 @@ export function sanitizeSettings(value: unknown, fallback: Settings): Settings {
     audioMode: typeof candidate.audioMode === 'string' && audioModes.has(candidate.audioMode as AudioMode) ? candidate.audioMode as AudioMode : fallback.audioMode,
     volume: Math.max(0, Math.min(1, candidate.volume)),
     instrument: typeof candidate.instrument === 'string' && instruments.has(candidate.instrument as Instrument) ? candidate.instrument as Instrument : 'marimba',
+    pictureTheme: typeof candidate.pictureTheme === 'string' && pictureThemes.has(candidate.pictureTheme as PictureTheme) ? candidate.pictureTheme as PictureTheme : fallback.pictureTheme,
     reducedMotion: candidate.reducedMotion,
     lockdownMode: typeof candidate.lockdownMode === 'boolean' ? candidate.lockdownMode : false,
     showExitHint: typeof candidate.showExitHint === 'boolean' ? candidate.showExitHint : fallback.showExitHint,

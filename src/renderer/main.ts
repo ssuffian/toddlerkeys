@@ -22,6 +22,7 @@ const soundControl = select<HTMLInputElement>('#sound');
 const audioModeControl = select<HTMLSelectElement>('#audio-mode');
 const instrumentControl = select<HTMLSelectElement>('#instrument');
 const instrumentRow = select<HTMLElement>('#instrument-row');
+const pictureThemeControl = select<HTMLSelectElement>('#picture-theme');
 const volumeControl = select<HTMLInputElement>('#volume');
 const volumeValue = select<HTMLOutputElement>('#volume-value');
 const motionControl = select<HTMLInputElement>('#motion');
@@ -49,7 +50,7 @@ if (browserMode) {
 }
 
 function readControls(): Settings {
-  return { sound: soundControl.checked, audioMode: audioModeControl.value as Settings['audioMode'], volume: Number(volumeControl.value), instrument: instrumentControl.value as Settings['instrument'], reducedMotion: motionControl.checked, lockdownMode: lockdownControl.checked, showExitHint: exitHintControl.checked };
+  return { sound: soundControl.checked, audioMode: audioModeControl.value as Settings['audioMode'], volume: Number(volumeControl.value), instrument: instrumentControl.value as Settings['instrument'], pictureTheme: pictureThemeControl.value as Settings['pictureTheme'], reducedMotion: motionControl.checked, lockdownMode: lockdownControl.checked, showExitHint: exitHintControl.checked };
 }
 
 function render(snapshot: AppSnapshot) {
@@ -78,6 +79,7 @@ function render(snapshot: AppSnapshot) {
     soundControl.checked = snapshot.settings.sound;
     audioModeControl.value = snapshot.settings.audioMode;
     instrumentControl.value = snapshot.settings.instrument;
+    pictureThemeControl.value = snapshot.settings.pictureTheme;
     audioModeControl.disabled = !snapshot.settings.sound;
     instrumentControl.disabled = !snapshot.settings.sound || snapshot.settings.audioMode === 'speech';
     instrumentRow.classList.toggle('muted-setting', snapshot.settings.audioMode === 'speech');
@@ -88,6 +90,7 @@ function render(snapshot: AppSnapshot) {
     lockdownControl.checked = snapshot.settings.lockdownMode;
     playHint.textContent = snapshot.settings.showExitHint ? 'Parent exit: hold Control + Shift + K for 2 seconds' : 'Press any key';
     scene.setReducedMotion(snapshot.settings.reducedMotion);
+    scene.setPictureTheme(snapshot.settings.pictureTheme);
     sound.configure(snapshot.settings);
   }
   if (lastState !== snapshot.state) {
@@ -123,6 +126,7 @@ instrumentControl.addEventListener('change', async () => {
   sound.accept({ phase: 'down', code: 'InstrumentPreview', label: '♪', category: 'symbol', colorIndex: 4, at: performance.now() });
   void saveControls();
 });
+pictureThemeControl.addEventListener('change', () => { scene.setPictureTheme(readControls().pictureTheme); void saveControls(); });
 volumeControl.addEventListener('input', () => { volumeValue.value = `${Math.round(Number(volumeControl.value) * 100)}%`; sound.configure(readControls()); });
 volumeControl.addEventListener('change', () => { void saveControls(); });
 motionControl.addEventListener('change', () => { scene.setReducedMotion(motionControl.checked); void saveControls(); });

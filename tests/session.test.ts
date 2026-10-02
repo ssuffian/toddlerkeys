@@ -36,12 +36,12 @@ describe('session lifecycle', () => {
 
   it('validates, clamps, and locks settings while playing', () => {
     const controller = new SessionController();
-    expect(controller.updateSettings({ sound: false, audioMode: 'speech', volume: 2, instrument: 'bells', reducedMotion: true, lockdownMode: false, showExitHint: true })).toBe(true);
-    expect(controller.snapshot().settings).toEqual({ sound: false, audioMode: 'speech', volume: 1, instrument: 'bells', reducedMotion: true, lockdownMode: false, showExitHint: true });
-    expect(controller.updateSettings({ sound: true, audioMode: 'tones', volume: Number.NaN, instrument: 'piano', reducedMotion: false, lockdownMode: false, showExitHint: false })).toBe(false);
+    expect(controller.updateSettings({ sound: false, audioMode: 'speech', volume: 2, instrument: 'bells', pictureTheme: 'animals', reducedMotion: true, lockdownMode: false, showExitHint: true })).toBe(true);
+    expect(controller.snapshot().settings).toEqual({ sound: false, audioMode: 'speech', volume: 1, instrument: 'bells', pictureTheme: 'animals', reducedMotion: true, lockdownMode: false, showExitHint: true });
+    expect(controller.updateSettings({ sound: true, audioMode: 'tones', volume: Number.NaN, instrument: 'piano', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: false })).toBe(false);
     practice(controller);
     controller.start();
-    expect(controller.updateSettings({ sound: true, audioMode: 'tones', volume: 0.5, instrument: 'piano', reducedMotion: false, lockdownMode: false, showExitHint: false })).toBe(false);
+    expect(controller.updateSettings({ sound: true, audioMode: 'tones', volume: 0.5, instrument: 'piano', pictureTheme: 'food', reducedMotion: false, lockdownMode: false, showExitHint: false })).toBe(false);
   });
 
   it('lets Escape return to setup unless lockdown mode is enabled', () => {

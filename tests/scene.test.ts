@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlayKey } from '../src/shared/contracts';
-import { MAX_BUBBLES, MAX_PARTICLES, MAX_PICTURES, PICTURE_MS, SceneState } from '../src/renderer/scene';
+import { MAX_BUBBLES, MAX_PARTICLES, MAX_PICTURES, SceneState } from '../src/renderer/scene';
 import { LETTER_PICTURES } from '../src/renderer/letter-pictures';
 
 const event = (index: number, phase: PlayKey['phase'] = 'down'): PlayKey => ({
@@ -8,9 +8,12 @@ const event = (index: number, phase: PlayKey['phase'] = 'down'): PlayKey => ({
 });
 
 describe('scene state', () => {
-  it('has five picture choices for every letter', () => {
-    expect(Object.keys(LETTER_PICTURES)).toHaveLength(26);
-    expect(Object.values(LETTER_PICTURES).every(choices => choices.length === 5)).toBe(true);
+  it('has one fixed picture for every letter in every theme', () => {
+    expect(Object.keys(LETTER_PICTURES)).toEqual(['mixed', 'animals', 'food', 'transport']);
+    expect(Object.values(LETTER_PICTURES).every(pictures => Object.keys(pictures).length === 26)).toBe(true);
+    expect(Object.values(LETTER_PICTURES).every(pictures => Object.entries(pictures).every(([letter, picture]) => picture.word.startsWith(letter)))).toBe(true);
+    expect(LETTER_PICTURES.animals.A).toEqual({ icon: '🐜', word: 'Ant' });
+    expect(LETTER_PICTURES.transport.A).toEqual({ icon: '✈️', word: 'Airplane' });
   });
 
   it('keeps a stationary newest glyph and expires older trail bubbles', () => {
@@ -57,29 +60,29 @@ describe('scene state', () => {
     expect(state.particles).toHaveLength(0);
   });
 
-  it('shows a random picture for each letter and retires it after two seconds', () => {
+  it('keeps a themed letter picture until the next keypress replaces it', () => {
     let now = 0;
     const state = new SceneState(() => now, () => 0);
-    state.accept({ ...event(1), code: 'KeyA', label: 'a', category: 'letter' });
-    expect(state.pictures[0]).toMatchObject({ letter: 'A', icon: '🍎', word: 'Apple', slot: 0, expiresAt: PICTURE_MS });
-    now = PICTURE_MS - 1;
+    state.accept({ ...event(1), code: 'KeyA', label: 'a', category: 'letter' }, false, 'animals');
+    expect(state.pictures[0]).toMatchObject({ letter: 'A', icon: '🐜', word: 'Ant', slot: 0 });
+    now = 60_000;
     state.sweep();
     expect(state.pictures).toHaveLength(1);
-    now = PICTURE_MS;
-    state.sweep();
-    expect(state.pictures).toHaveLength(0);
+    state.accept({ ...event(2), code: 'KeyB', label: 'B', category: 'letter' }, false, 'animals');
+    expect(state.pictures).toHaveLength(MAX_PICTURES);
+    expect(state.pictures[0]).toMatchObject({ letter: 'B', icon: '🐻', word: 'Bear' });
   });
 
   it('keeps the picture collection bounded during repeated letter presses', () => {
     const state = new SceneState(() => 0, () => 0.5);
     for (let index = 0; index < 20; index += 1) state.accept({ ...event(index), code: 'KeyB', label: 'B', category: 'letter' });
-    expect(state.pictures.length).toBeLessThanOrEqual(MAX_PICTURES);
+    expect(state.pictures).toHaveLength(MAX_PICTURES);
   });
 
-  it('never places two visible pictures in the same slot', () => {
+  it('removes the picture when the next printed key has no letter picture', () => {
     const state = new SceneState(() => 0, () => 0);
-    for (const letter of ['A', 'B', 'C', 'D']) state.accept({ ...event(1), code: `Key${letter}`, label: letter, category: 'letter' });
-    const slots = state.pictures.map(picture => picture.slot);
-    expect(new Set(slots).size).toBe(slots.length);
+    state.accept({ ...event(1), code: 'KeyA', label: 'A', category: 'letter' });
+    state.accept({ ...event(2), label: '2', category: 'number' });
+    expect(state.pictures).toEqual([]);
   });
 });

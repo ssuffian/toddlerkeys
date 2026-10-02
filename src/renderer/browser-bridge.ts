@@ -8,6 +8,7 @@ const defaults = (): Settings => ({
   audioMode: 'tones',
   volume: 0.15,
   instrument: 'marimba',
+  pictureTheme: 'mixed',
   reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   lockdownMode: false,
   showExitHint: true,
@@ -21,6 +22,7 @@ function storedSettings(): Settings {
   const fallback = defaults();
   try {
     const value = JSON.parse(window.localStorage.getItem(SETTINGS_KEY) ?? 'null');
+    if (value && typeof value === 'object' && !Array.isArray(value) && !('pictureTheme' in value)) value.pictureTheme = fallback.pictureTheme;
     const validator = new SessionController(undefined, fallback);
     return validator.updateSettings(value) ? validator.snapshot().settings : fallback;
   } catch {
