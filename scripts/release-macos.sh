@@ -51,6 +51,20 @@ fi
 unset MACOS_SIGN_IDENTITY
 unset MACOS_NOTARY_PROFILE
 
+# Apple's ticket lookup can fail for a short while right after stapling
+# ("CloudKit query ... failed", stapler Error 65). Retry before giving up.
+validate_staple() {
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    if xcrun stapler validate "$1"; then
+      return 0
+    fi
+    print "Stapled ticket not visible yet (attempt ${attempt}); retrying in 15s..."
+    sleep 15
+  done
+  xcrun stapler validate "$1"
+}
+
 build_release() {
   local arch="$1"
   local app_path="out/Toddler Keys-darwin-${arch}/Toddler Keys.app"
@@ -81,7 +95,7 @@ build_release() {
     --keychain-profile "$notary_profile" \
     --wait
   xcrun stapler staple "$app_path"
-  xcrun stapler validate "$app_path"
+  validate_staple "$app_path"
   spctl --assess --type execute --verbose=4 "$app_path"
 
   mkdir -p "$zip_dir" "$dmg_dir"
@@ -106,7 +120,7 @@ build_release() {
     --keychain-profile "$notary_profile" \
     --wait
   xcrun stapler staple "$dmg_path"
-  xcrun stapler validate "$dmg_path"
+  validate_staple "$dmg_path"
   spctl --assess --type open --context context:primary-signature --verbose=4 "$dmg_path"
 
   verify_dir="$(mktemp -d "/tmp/toddlerkeys-verify-${arch}.XXXXXX")"
