@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PlayKey, Settings } from '../src/shared/contracts';
-import { spokenKey, ToneScheduler } from '../src/renderer/audio';
+import { spokenKey, SpeechGate, STUCK_SPEECH_MS, ToneScheduler } from '../src/renderer/audio';
 
 const settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: false };
 const event = (index: number, phase: PlayKey['phase'] = 'down'): PlayKey => ({ phase, code: `Key${index}`, label: 'A', category: 'letter', colorIndex: index % 8, at: index });
@@ -50,5 +50,37 @@ describe('tone scheduler', () => {
     expect(scheduler.accept(event(2), settings)).toBeNull();
     scheduler.start();
     expect(scheduler.accept(event(3), settings)).not.toBeNull();
+  });
+});
+
+describe('speech gate', () => {
+  it('speaks immediately when idle and keeps only the latest key while busy', () => {
+    const gate = new SpeechGate(() => 0);
+    expect(gate.accept('A')).toBe('A');
+    expect(gate.accept('B')).toBeNull();
+    expect(gate.accept('C')).toBeNull();
+    expect(gate.finished()).toBe('C');
+    expect(gate.finished()).toBeNull();
+    expect(gate.accept('D')).toBe('D');
+  });
+
+  it('never asks the caller to cancel between utterances', () => {
+    const gate = new SpeechGate(() => 0);
+    gate.accept('A');
+    expect(gate.busy).toBe(true);
+    gate.clear();
+    expect(gate.busy).toBe(false);
+    expect(gate.accept('B')).toBe('B');
+  });
+
+  it('recovers when an utterance never reports completion', () => {
+    let now = 0;
+    const gate = new SpeechGate(() => now);
+    expect(gate.accept('A')).toBe('A');
+    now = 1000;
+    expect(gate.accept('B')).toBeNull();
+    now = 1000 + STUCK_SPEECH_MS;
+    expect(gate.stuck).toBe(true);
+    expect(gate.accept('C')).toBe('C');
   });
 });

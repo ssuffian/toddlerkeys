@@ -206,8 +206,14 @@ export class Windows {
       this.primary.setKiosk(true);
       this.scheduleRefocus();
     } else if (previous !== 'setup' && snapshot.state === 'setup') {
+      const wasFullScreen = this.primary.isFullScreen();
       this.primary.setKiosk(false);
-      this.pinPrimaryToAllWorkspaces(false);
+      // Leaving fullscreen is asynchronous on macOS. Changing the window's
+      // workspace behavior (and the dock/process type with it) while that
+      // transition is still running strands the next kiosk session in a
+      // fullscreen Space the user never sees. Unpin after the exit completes.
+      if (wasFullScreen) this.primary.once('leave-full-screen', () => { if (!this.controller.active) this.pinPrimaryToAllWorkspaces(false); });
+      else this.pinPrimaryToAllWorkspaces(false);
       for (const cover of this.covers.values()) cover.destroy();
       this.covers.clear();
       this.primary.setAlwaysOnTop(false);

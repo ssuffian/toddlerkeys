@@ -50,6 +50,40 @@ const SYMBOL_NAMES: Readonly<Record<string, string>> = {
   '<': 'less than', '>': 'greater than', '/': 'slash', '?': 'question mark', '`': 'backtick', '~': 'tilde',
 };
 
+// Chromium's speech synthesis gets stuck (speaking stays true, every later
+// utterance reports "canceled") when cancel() races a starting utterance,
+// which happens as soon as several keys land in one burst. So we never cancel
+// mid-utterance: one utterance plays at a time and only the newest waiting key
+// is spoken next.
+export const STUCK_SPEECH_MS = 4000;
+
+export class SpeechGate {
+  private startedAt: number | undefined;
+  private waiting: string | null = null;
+  constructor(private readonly now: () => number = () => performance.now()) {}
+
+  get busy(): boolean { return this.startedAt !== undefined && !this.stuck; }
+  get stuck(): boolean { return this.startedAt !== undefined && this.now() - this.startedAt >= STUCK_SPEECH_MS; }
+
+  accept(text: string): string | null {
+    if (this.busy) { this.waiting = text; return null; }
+    this.waiting = null;
+    this.startedAt = this.now();
+    return text;
+  }
+
+  finished(): string | null {
+    this.startedAt = undefined;
+    const next = this.waiting;
+    this.waiting = null;
+    if (next === null) return null;
+    this.startedAt = this.now();
+    return next;
+  }
+
+  clear(): void { this.startedAt = undefined; this.waiting = null; }
+}
+
 export function spokenKey(key: PlayKey): string | null {
   if (key.phase !== 'down' || key.category === 'control') return null;
   return key.category === 'symbol' ? SYMBOL_NAMES[key.label] ?? key.label : key.label;
@@ -60,6 +94,9 @@ export function createSound(): Sound {
   let settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: true };
   let scheduler = new ToneScheduler();
   const voices = new Set<OscillatorNode>();
+  const gate = new SpeechGate();
+  // Chromium may drop utterance events when the object is garbage collected.
+  let current: SpeechSynthesisUtterance | undefined;
 
   const ensureContext = () => {
     if (!context) context = new AudioContext({ latencyHint: 'interactive' });
@@ -69,18 +106,38 @@ export function createSound(): Sound {
     for (const voice of voices) { try { voice.stop(); } catch { /* already stopped */ } }
     voices.clear();
   };
-  const stopSpeech = () => { try { window.speechSynthesis?.cancel(); } catch { /* speech remains optional */ } };
-  const speak = (key: PlayKey) => {
-    const text = spokenKey(key);
-    if (!text || !settings.sound || settings.volume <= 0 || !('speechSynthesis' in window)) return;
+  const stopSpeech = () => {
+    const wasBusy = gate.busy || gate.stuck;
+    gate.clear();
+    current = undefined;
+    // cancel() is only needed while something is in flight; calling it right
+    // before speak() is what wedges the synthesizer.
+    if (wasBusy) try { window.speechSynthesis?.cancel(); } catch { /* speech remains optional */ }
+  };
+  const utter = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.86;
     utterance.pitch = 1.08;
     utterance.volume = settings.volume;
     const voices = window.speechSynthesis.getVoices();
     utterance.voice = voices.find(voice => voice.localService && voice.lang.toLowerCase().startsWith('en')) ?? null;
-    window.speechSynthesis.cancel();
+    const done = () => {
+      if (current !== utterance) return;
+      current = undefined;
+      const next = gate.finished();
+      if (next !== null) utter(next);
+    };
+    utterance.addEventListener('end', done, { once: true });
+    utterance.addEventListener('error', done, { once: true });
+    current = utterance;
     window.speechSynthesis.speak(utterance);
+  };
+  const speak = (key: PlayKey) => {
+    const text = spokenKey(key);
+    if (!text || !settings.sound || settings.volume <= 0 || !('speechSynthesis' in window)) return;
+    if (gate.stuck) stopSpeech();
+    const now = gate.accept(text);
+    if (now !== null) utter(now);
   };
 
   return {
