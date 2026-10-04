@@ -6,7 +6,8 @@
 }
 * { box-sizing: border-box; }
 html, body, #app { width: 100%; min-width: 100%; min-height: 100%; margin: 0; }
-body { min-height: 100vh; overflow: hidden; }
+body { min-height: 100vh; }
+body:has(.play-view:not([hidden])) { overflow: hidden; }
 button, input { font: inherit; }
 [hidden] { display: none !important; }
 .setup-view {
@@ -118,7 +119,7 @@ button:focus-visible { outline: 3px solid rgba(214, 109, 74, .55); outline-offse
   .actions { margin-top: 12px; }
 }
 @media (max-width: 780px), (max-height: 690px) {
-  .setup-view { min-height: 100vh; grid-template-columns: 1fr; gap: 22px; align-content: start; overflow: auto; padding: 27px; }
+  .setup-view { min-height: 100vh; grid-template-columns: 1fr; gap: 22px; align-content: start; padding: 27px; }
   .setup-copy h1 { font-size: 57px; line-height: .86; }
   .setup-copy h1 br { display: none; }
   .intro { margin-top: 15px; font-size: 17px; }
