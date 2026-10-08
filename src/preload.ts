@@ -10,6 +10,8 @@ const bridge: ToddlerKeysBridge = Object.freeze({
   start: () => ipcRenderer.invoke(IPC.start),
   updateSettings: (settings: Settings) => ipcRenderer.invoke(IPC.settings, settings),
   quitFromSetup: () => ipcRenderer.invoke(IPC.quit),
+  speak: (text: string, volume: number) => ipcRenderer.invoke(IPC.speak, text, volume),
+  stopSpeaking: () => ipcRenderer.send(IPC.stopSpeaking),
   onSnapshot: (callback: (value: AppSnapshot) => void) => subscribe(IPC.snapshot, callback),
   onKey: (callback: (value: PlayKey) => void) => subscribe(IPC.key, callback),
 });

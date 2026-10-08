@@ -4,8 +4,10 @@ import { IPC } from '../shared/contracts';
 import { SessionController } from './session';
 import { defaultSettings, SettingsStore } from './settings';
 import { Windows } from './windows';
+import { LinuxSpeech } from './speech';
 
 let windows: Windows | undefined;
+const linuxSpeech = process.platform === 'linux' ? new LinuxSpeech() : undefined;
 const controller = new SessionController(snapshot => windows?.update(snapshot));
 if (process.platform === 'linux') {
   // Some Linux GPU/driver combinations crash Chromium's GPU process before a
@@ -56,12 +58,17 @@ else {
       if (!windows?.accepts(event) || controller.active) return false;
       app.quit(); return true;
     });
+    ipcMain.handle(IPC.speak, (event, text: unknown, volume: unknown) => {
+      if (!windows?.accepts(event) || !linuxSpeech) return false;
+      return linuxSpeech.speak(text, volume);
+    });
+    ipcMain.on(IPC.stopSpeaking, event => { if (windows?.accepts(event)) linuxSpeech?.stop(); });
     ipcMain.on(IPC.heartbeat, event => windows?.heartbeat(event));
     powerMonitor.on('suspend', () => windows?.discontinuity());
     powerMonitor.on('resume', () => windows?.discontinuity());
     powerMonitor.on('lock-screen', () => windows?.discontinuity());
     powerMonitor.on('unlock-screen', () => windows?.discontinuity());
     const timer = setInterval(() => controller.tick(performance.now()), 40);
-    app.once('will-quit', () => clearInterval(timer));
+    app.once('will-quit', () => { clearInterval(timer); linuxSpeech?.stop(); });
   });
 }

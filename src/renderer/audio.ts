@@ -1,4 +1,4 @@
-import type { PlayKey, Settings } from '../shared/contracts';
+import type { PlayKey, Settings, ToddlerKeysBridge } from '../shared/contracts';
 
 const MAX_VOICES = 4;
 const MAX_STARTS_PER_SECOND = 8;
@@ -40,6 +40,8 @@ export interface Sound {
   stop(): void;
   dispose(): void;
 }
+
+export type NativeSpeech = Pick<ToddlerKeysBridge, 'speak' | 'stopSpeaking'>;
 
 const SYMBOL_NAMES: Readonly<Record<string, string>> = {
   '!': 'exclamation mark', '@': 'at sign', '#': 'hash', '$': 'dollar sign', '%': 'percent',
@@ -89,7 +91,7 @@ export function spokenKey(key: PlayKey): string | null {
   return key.category === 'symbol' ? SYMBOL_NAMES[key.label] ?? key.label : key.label;
 }
 
-export function createSound(): Sound {
+export function createSound(nativeSpeech?: NativeSpeech): Sound {
   let context: AudioContext | undefined;
   let settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: true };
   let scheduler = new ToneScheduler();
@@ -107,6 +109,7 @@ export function createSound(): Sound {
     voices.clear();
   };
   const stopSpeech = () => {
+    nativeSpeech?.stopSpeaking();
     const wasBusy = gate.busy || gate.stuck;
     gate.clear();
     current = undefined;
@@ -132,12 +135,19 @@ export function createSound(): Sound {
     current = utterance;
     window.speechSynthesis.speak(utterance);
   };
-  const speak = (key: PlayKey) => {
-    const text = spokenKey(key);
-    if (!text || !settings.sound || settings.volume <= 0 || !('speechSynthesis' in window)) return;
+  const speakInBrowser = (text: string) => {
+    if (!('speechSynthesis' in window)) return;
     if (gate.stuck) stopSpeech();
     const now = gate.accept(text);
     if (now !== null) utter(now);
+  };
+  const speak = (key: PlayKey) => {
+    const text = spokenKey(key);
+    if (!text || !settings.sound || settings.volume <= 0) return;
+    if (!nativeSpeech) { speakInBrowser(text); return; }
+    void nativeSpeech.speak(text, settings.volume)
+      .then(handled => { if (!handled) speakInBrowser(text); })
+      .catch(() => speakInBrowser(text));
   };
 
   return {

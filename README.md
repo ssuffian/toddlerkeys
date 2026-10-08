@@ -2,6 +2,8 @@
 
 A gentle, offline-friendly keyboard play space for young children.
 
+Licensed under the [GNU General Public License v3.0](LICENSE).
+
 Letters, numbers, and symbols create colorful play scenes. A recent-key row reinforces letter and number sequences, and parents can choose musical tones or spoken key names. Modifier and other control keys are ignored during play.
 
 ## Ways to play

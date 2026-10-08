@@ -28,11 +28,14 @@ export interface ToddlerKeysBridge {
   start(): Promise<boolean>;
   updateSettings(settings: Settings): Promise<boolean>;
   quitFromSetup(): Promise<boolean>;
+  speak(text: string, volume: number): Promise<boolean>;
+  stopSpeaking(): void;
   onSnapshot(callback: (snapshot: AppSnapshot) => void): () => void;
   onKey(callback: (key: PlayKey) => void): () => void;
 }
 export const IPC = {
   snapshot: 'toddler:snapshot', getSnapshot: 'toddler:get-snapshot', key: 'toddler:key',
   start: 'toddler:start', settings: 'toddler:settings', quit: 'toddler:quit-from-setup', heartbeat: 'toddler:heartbeat',
+  speak: 'toddler:speak', stopSpeaking: 'toddler:stop-speaking',
 } as const;
 declare global { interface Window { toddlerKeys?: ToddlerKeysBridge } }

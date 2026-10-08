@@ -108,6 +108,9 @@ export function createBrowserBridge(): ToddlerKeysBridge {
       return true;
     },
     quitFromSetup: async () => false,
+    // Browsers use the Web Speech API directly in the renderer.
+    speak: async () => false,
+    stopSpeaking: () => {},
     onSnapshot(callback: (snapshot: AppSnapshot) => void) { snapshots.add(callback); return () => snapshots.delete(callback); },
     onKey(callback: (key: PlayKey) => void) { keys.add(callback); return () => keys.delete(callback); },
   });

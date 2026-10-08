@@ -47,6 +47,9 @@ const config: ForgeConfig = {
         icon: linuxIcon,
         maintainer: 'Toddler Keys',
         homepage: 'https://github.com/ssuffian/toddlerkeys',
+        // Chromium does not provide built-in speech voices on Linux. Install a
+        // compact offline synthesizer for the native spoken-key fallback.
+        depends: ['espeak-ng'],
       },
     }, ['linux']),
   ],

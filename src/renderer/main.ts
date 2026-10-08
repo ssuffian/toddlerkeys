@@ -33,7 +33,7 @@ const settingsStatus = select<HTMLElement>('#settings-status');
 const appVersion = select<HTMLElement>('#app-version');
 const scene = createScene(sceneRoot);
 const history = createKeyHistory(select<HTMLElement>('#key-history'));
-const sound = createSound();
+const sound = createSound(bridge);
 let latest: AppSnapshot | undefined;
 let lastState: AppSnapshot['state'] | undefined;
 let renderedSettings = '';

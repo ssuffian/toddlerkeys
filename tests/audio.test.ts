@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PlayKey, Settings } from '../src/shared/contracts';
 import { spokenKey, SpeechGate, STUCK_SPEECH_MS, ToneScheduler } from '../src/renderer/audio';
+import { speechArguments } from '../src/main/speech';
 
 const settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: false };
 const event = (index: number, phase: PlayKey['phase'] = 'down'): PlayKey => ({ phase, code: `Key${index}`, label: 'A', category: 'letter', colorIndex: index % 8, at: index });
@@ -20,6 +21,14 @@ describe('tone scheduler', () => {
     expect(spokenKey({ ...event(1), label: '?', category: 'symbol' })).toBe('question mark');
     expect(spokenKey({ ...event(1), label: 'Ctrl', category: 'control' })).toBeNull();
     expect(spokenKey(event(1, 'up'))).toBeNull();
+  });
+
+  it('builds bounded Linux speech arguments without invoking a shell', () => {
+    expect(speechArguments('A', 0.15)).toEqual(['-v', 'en-us', '-s', '150', '-p', '55', '-a', '30', 'A']);
+    expect(speechArguments('', 0.5)).toBeNull();
+    expect(speechArguments('A\nB', 0.5)).toBeNull();
+    expect(speechArguments('A', Number.NaN)).toBeNull();
+    expect(speechArguments('A', 2)).toBeNull();
   });
 
   it('allows at most four live voices and eight starts per second without queuing', () => {
