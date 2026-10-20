@@ -37,15 +37,23 @@ describe('session lifecycle', () => {
   it('validates, clamps, and locks settings while playing', () => {
     const controller = new SessionController();
     expect(controller.updateSettings({ sound: false, audioMode: 'speech', volume: 2, instrument: 'bells', pictureTheme: 'animals', reducedMotion: true, lockdownMode: false, showExitHint: true })).toBe(true);
-    expect(controller.snapshot().settings).toEqual({ sound: false, audioMode: 'speech', volume: 1, instrument: 'bells', pictureTheme: 'animals', reducedMotion: true, lockdownMode: false, showExitHint: true });
+    expect(controller.snapshot().settings).toEqual({ playMode: 'free', sound: false, audioMode: 'speech', volume: 1, instrument: 'bells', pictureTheme: 'animals', reducedMotion: true, lockdownMode: false, showExitHint: true });
     expect(controller.updateSettings({ sound: true, audioMode: 'tones', volume: Number.NaN, instrument: 'piano', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: false })).toBe(false);
     practice(controller);
     controller.start();
     expect(controller.updateSettings({ sound: true, audioMode: 'tones', volume: 0.5, instrument: 'piano', pictureTheme: 'food', reducedMotion: false, lockdownMode: false, showExitHint: false })).toBe(false);
   });
 
+  it('accepts find mode and rejects unknown modes', () => {
+    const controller = new SessionController();
+    expect(controller.updateSettings({ ...controller.snapshot().settings, playMode: 'find' })).toBe(true);
+    expect(controller.snapshot().settings.playMode).toBe('find');
+    expect(controller.updateSettings({ ...controller.snapshot().settings, playMode: 'other' })).toBe(false);
+  });
+
   it('lets Escape return to setup unless lockdown mode is enabled', () => {
     const controller = new SessionController();
+    controller.updateSettings({ ...controller.snapshot().settings, lockdownMode: false });
     practice(controller);
     controller.start();
     expect(controller.exitWithEscape()).toBe(true);
@@ -54,6 +62,19 @@ describe('session lifecycle', () => {
     controller.start();
     expect(controller.exitWithEscape()).toBe(false);
     expect(controller.snapshot().state).toBe('playing');
+  });
+
+  it('immediately dismisses hold progress on release, including autorepeat-marked releases', () => {
+    const changed = vi.fn();
+    const controller = new SessionController(changed);
+    practice(controller);
+    controller.start();
+    controller.input(key({ type: 'down', code: 'KeyK', key: 'k', control: true, shift: true, at: 5000 }));
+    controller.tick(5500);
+    expect(controller.snapshot().unlock.phase).toBe('holding');
+    changed.mockClear();
+    controller.input(key({ type: 'up', code: 'KeyK', key: 'k', control: true, shift: true, repeat: true, at: 5501 }));
+    expect(changed).toHaveBeenLastCalledWith(expect.objectContaining({ state: 'playing', unlock: { phase: 'idle', holdProgress: 0 } }));
   });
 
   it('does not publish full snapshots for ordinary play keys', () => {

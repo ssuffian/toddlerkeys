@@ -1,18 +1,10 @@
+import { defaultSettings } from '../shared/settings';
 import { SessionController } from '../main/session';
 import type { AppSnapshot, PhysicalInput, PlayKey, Settings, ToddlerKeysBridge } from '../shared/contracts';
 import { normalizePlayableKey } from '../shared/keys';
 
 const SETTINGS_KEY = 'toddler-keys-settings';
-const defaults = (): Settings => ({
-  sound: true,
-  audioMode: 'tones',
-  volume: 0.15,
-  instrument: 'marimba',
-  pictureTheme: 'mixed',
-  reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  lockdownMode: false,
-  showExitHint: true,
-});
+const defaults = (): Settings => defaultSettings(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 type KeyboardLockNavigator = Navigator & {
   keyboard?: { lock(keys?: string[]): Promise<void>; unlock(): void };

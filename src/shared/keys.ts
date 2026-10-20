@@ -41,5 +41,5 @@ export function normalizeKey(input: PhysicalInput): PlayKey | null {
 
 export function normalizePlayableKey(input: PhysicalInput): PlayKey | null {
   const key = normalizeKey(input);
-  return key?.category === 'control' ? null : key;
+  return key?.category === 'control' && key.code !== 'Space' ? null : key;
 }

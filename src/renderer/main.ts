@@ -1,8 +1,8 @@
-import './styles.css';
 import type { AppSnapshot, Settings } from '../shared/contracts';
 import { createScene } from './scene';
 import { createSound } from './audio';
 import { createBrowserBridge } from './browser-bridge';
+import { createFindGame } from './find-game';
 import { createKeyHistory } from './history';
 
 const electronBridge = window.toddlerKeys;
@@ -18,6 +18,7 @@ const start = select<HTMLButtonElement>('#start');
 const progress = select<HTMLElement>('#progress');
 const holdMeter = select<HTMLElement>('#hold-meter');
 const playExitProgress = select<HTMLElement>('#play-exit-progress');
+const playModeControls = [...document.querySelectorAll<HTMLInputElement>('input[name="play-mode"]')];
 const soundControl = select<HTMLInputElement>('#sound');
 const audioModeControl = select<HTMLSelectElement>('#audio-mode');
 const instrumentControl = select<HTMLSelectElement>('#instrument');
@@ -34,9 +35,24 @@ const appVersion = select<HTMLElement>('#app-version');
 const scene = createScene(sceneRoot);
 const history = createKeyHistory(select<HTMLElement>('#key-history'));
 const sound = createSound(bridge);
+const findGame = createFindGame(select<HTMLElement>('#find-prompt'), (text, preserve) => sound.say(text, preserve));
 let latest: AppSnapshot | undefined;
 let lastState: AppSnapshot['state'] | undefined;
 let renderedSettings = '';
+
+function showSetupPage(settings: boolean) {
+  select<HTMLElement>('.setup-pages').scrollTop = 0;
+  select<HTMLElement>('#home-page').hidden = settings;
+  select<HTMLElement>('#settings-page').hidden = !settings;
+  select<HTMLElement>('#home-actions').hidden = settings;
+  select<HTMLElement>('#settings-actions').hidden = !settings;
+  select<HTMLElement>('#show-home').setAttribute('aria-pressed', String(!settings));
+  select<HTMLElement>('#show-settings').setAttribute('aria-pressed', String(settings));
+  select<HTMLElement>(settings ? '#settings-title' : '#show-home').focus();
+}
+select<HTMLButtonElement>('#show-home').addEventListener('click', () => showSetupPage(false));
+select<HTMLButtonElement>('#show-settings').addEventListener('click', () => showSetupPage(true));
+select<HTMLButtonElement>('#settings-done').addEventListener('click', () => showSetupPage(false));
 
 appVersion.textContent = `v${__APP_VERSION__}`;
 appVersion.setAttribute('aria-label', `Toddler Keys version ${__APP_VERSION__}`);
@@ -50,7 +66,7 @@ if (browserMode) {
 }
 
 function readControls(): Settings {
-  return { sound: soundControl.checked, audioMode: audioModeControl.value as Settings['audioMode'], volume: Number(volumeControl.value), instrument: instrumentControl.value as Settings['instrument'], pictureTheme: pictureThemeControl.value as Settings['pictureTheme'], reducedMotion: motionControl.checked, lockdownMode: lockdownControl.checked, showExitHint: exitHintControl.checked };
+  return { playMode: playModeControls.find(control => control.checked)!.value as Settings['playMode'], sound: soundControl.checked, audioMode: audioModeControl.value as Settings['audioMode'], volume: Number(volumeControl.value), instrument: instrumentControl.value as Settings['instrument'], pictureTheme: pictureThemeControl.value as Settings['pictureTheme'], reducedMotion: motionControl.checked, lockdownMode: lockdownControl.checked, showExitHint: exitHintControl.checked };
 }
 
 function render(snapshot: AppSnapshot) {
@@ -76,6 +92,7 @@ function render(snapshot: AppSnapshot) {
   const settingsKey = JSON.stringify(snapshot.settings);
   if (settingsKey !== renderedSettings) {
     renderedSettings = settingsKey;
+    for (const control of playModeControls) control.checked = control.value === snapshot.settings.playMode;
     soundControl.checked = snapshot.settings.sound;
     audioModeControl.value = snapshot.settings.audioMode;
     instrumentControl.value = snapshot.settings.instrument;
@@ -90,13 +107,19 @@ function render(snapshot: AppSnapshot) {
     lockdownControl.checked = snapshot.settings.lockdownMode;
     playHint.textContent = snapshot.settings.showExitHint ? 'Parent exit: hold Control + Shift + K for 2 seconds' : 'Press any key';
     scene.setReducedMotion(snapshot.settings.reducedMotion);
+    findGame.setReducedMotion(snapshot.settings.reducedMotion);
     scene.setPictureTheme(snapshot.settings.pictureTheme);
+    findGame.setPictureTheme(snapshot.settings.pictureTheme);
     sound.configure(snapshot.settings);
   }
   if (lastState !== snapshot.state) {
     document.body.dataset.view = snapshot.state;
-    if (snapshot.state === 'playing') { history.clear(); void sound.unlock(); }
-    else { sound.stop(); scene.clear(); history.clear(); }
+    if (snapshot.state === 'playing') {
+      history.clear();
+      void sound.unlock();
+      if (snapshot.settings.playMode === 'find') findGame.start();
+    }
+    else { findGame.stop(); sound.stop(); scene.clear(); history.clear(); }
     lastState = snapshot.state;
   }
 }
@@ -109,10 +132,18 @@ async function saveControls() {
 }
 
 bridge.onSnapshot(render);
-bridge.onKey(key => { scene.accept(key); history.accept(key); sound.accept(key); });
+bridge.onKey(key => {
+  if (latest?.state !== 'playing') return;
+  if (latest.settings.playMode === 'find') {
+    findGame.accept(key);
+  } else if (key.code === 'Space') {
+    if (key.phase === 'down') sound.repeat();
+  } else { scene.accept(key); history.accept(key); sound.accept(key); }
+});
 void bridge.getSnapshot().then(render);
 start.addEventListener('click', () => { void sound.unlock(); void bridge.start(); });
 select<HTMLButtonElement>('#quit').addEventListener('click', () => { void bridge.quitFromSetup(); });
+for (const control of playModeControls) control.addEventListener('change', () => { void saveControls(); });
 soundControl.addEventListener('change', () => { sound.configure(readControls()); void saveControls(); });
 audioModeControl.addEventListener('change', async () => {
   sound.configure(readControls());
@@ -147,4 +178,4 @@ play.addEventListener('pointerdown', event => {
 document.addEventListener('contextmenu', event => { if (latest?.state === 'playing') event.preventDefault(); });
 for (const eventName of ['dragstart', 'dragover', 'drop'] as const) document.addEventListener(eventName, event => event.preventDefault());
 document.addEventListener('wheel', event => { if (latest?.state === 'playing' && event.ctrlKey) event.preventDefault(); }, { passive: false });
-window.addEventListener('beforeunload', () => { scene.dispose(); sound.dispose(); });
+window.addEventListener('beforeunload', () => { findGame.stop(); scene.dispose(); sound.dispose(); });

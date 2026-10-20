@@ -1,11 +1,12 @@
 import type { AppSnapshot, PhysicalInput, SessionState, Settings } from '../shared/contracts';
+import { defaultSettings } from '../shared/settings';
 import { createUnlockRecognizer } from './unlock';
 export class SessionController {
   private state: SessionState = 'setup';
   private practiced = false;
   private unlock = createUnlockRecognizer();
   private settings: Settings;
-  constructor(private changed: (snapshot: AppSnapshot) => void = () => {}, settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: true }) { this.settings = { ...settings }; }
+  constructor(private changed: (snapshot: AppSnapshot) => void = () => {}, settings: Settings = defaultSettings()) { this.settings = { ...settings }; }
   get active() { return this.state !== 'setup'; }
   snapshot(): AppSnapshot { return { state: this.state, practiced: this.practiced, unlock: this.unlock.progress(), settings: { ...this.settings } }; }
   private publish() { this.changed(this.snapshot()); }
@@ -46,7 +47,8 @@ export class SessionController {
   updateSettings(value: unknown) {
     if (this.active || !value || typeof value !== 'object' || Array.isArray(value)) return false;
     const s = value as Settings;
-    if (typeof s.sound !== 'boolean' || !['tones', 'speech'].includes(s.audioMode) || !['mixed', 'animals', 'food', 'transport'].includes(s.pictureTheme) || typeof s.reducedMotion !== 'boolean' || typeof s.lockdownMode !== 'boolean' || typeof s.showExitHint !== 'boolean' || !['marimba', 'piano', 'bells', 'softSynth'].includes(s.instrument) || typeof s.volume !== 'number' || !Number.isFinite(s.volume) || Object.keys(s).some(k => !['sound', 'audioMode', 'volume', 'instrument', 'pictureTheme', 'reducedMotion', 'lockdownMode', 'showExitHint'].includes(k))) return false;
-    this.settings = { sound: s.sound, audioMode: s.audioMode, volume: Math.max(0, Math.min(1, s.volume)), instrument: s.instrument, pictureTheme: s.pictureTheme, reducedMotion: s.reducedMotion, lockdownMode: s.lockdownMode, showExitHint: s.showExitHint }; this.publish(); return true;
+    if (s.playMode !== undefined && !['free', 'find'].includes(s.playMode)) return false;
+    if (typeof s.sound !== 'boolean' || !['tones', 'speech'].includes(s.audioMode) || !['mixed', 'animals', 'food', 'transport'].includes(s.pictureTheme) || typeof s.reducedMotion !== 'boolean' || typeof s.lockdownMode !== 'boolean' || typeof s.showExitHint !== 'boolean' || !['marimba', 'piano', 'bells', 'softSynth'].includes(s.instrument) || typeof s.volume !== 'number' || !Number.isFinite(s.volume) || Object.keys(s).some(k => !['playMode', 'sound', 'audioMode', 'volume', 'instrument', 'pictureTheme', 'reducedMotion', 'lockdownMode', 'showExitHint'].includes(k))) return false;
+    this.settings = { playMode: s.playMode ?? 'free', sound: s.sound, audioMode: s.audioMode, volume: Math.max(0, Math.min(1, s.volume)), instrument: s.instrument, pictureTheme: s.pictureTheme, reducedMotion: s.reducedMotion, lockdownMode: s.lockdownMode, showExitHint: s.showExitHint }; this.publish(); return true;
   }
 }

@@ -1,3 +1,4 @@
+import { defaultSettings } from '../shared/settings';
 import type { PlayKey, Settings, ToddlerKeysBridge } from '../shared/contracts';
 
 const MAX_VOICES = 4;
@@ -35,6 +36,8 @@ export class ToneScheduler {
 
 export interface Sound {
   accept(key: PlayKey): void;
+  say(text: string, preserve?: boolean): void;
+  repeat(): void;
   configure(settings: Settings): void;
   unlock(): Promise<void>;
   stop(): void;
@@ -55,35 +58,38 @@ const SYMBOL_NAMES: Readonly<Record<string, string>> = {
 // Chromium's speech synthesis gets stuck (speaking stays true, every later
 // utterance reports "canceled") when cancel() races a starting utterance,
 // which happens as soon as several keys land in one burst. So we never cancel
-// mid-utterance: one utterance plays at a time and only the newest waiting key
-// is spoken next.
+// mid-utterance: one utterance plays at a time. Correct-letter feedback stays
+// queued, while ordinary key guesses keep only the newest waiting key.
 export const STUCK_SPEECH_MS = 4000;
 
 export class SpeechGate {
   private startedAt: number | undefined;
-  private waiting: string | null = null;
+  private waiting: { text: string; preserve: boolean }[] = [];
   constructor(private readonly now: () => number = () => performance.now()) {}
 
   get busy(): boolean { return this.startedAt !== undefined && !this.stuck; }
   get stuck(): boolean { return this.startedAt !== undefined && this.now() - this.startedAt >= STUCK_SPEECH_MS; }
 
-  accept(text: string): string | null {
-    if (this.busy) { this.waiting = text; return null; }
-    this.waiting = null;
+  accept(text: string, preserve = false): string | null {
+    if (this.busy) {
+      this.waiting = this.waiting.filter(item => item.preserve);
+      this.waiting.push({ text, preserve });
+      return null;
+    }
+    this.waiting = [];
     this.startedAt = this.now();
     return text;
   }
 
   finished(): string | null {
     this.startedAt = undefined;
-    const next = this.waiting;
-    this.waiting = null;
-    if (next === null) return null;
+    const next = this.waiting.shift();
+    if (!next) return null;
     this.startedAt = this.now();
-    return next;
+    return next.text;
   }
 
-  clear(): void { this.startedAt = undefined; this.waiting = null; }
+  clear(): void { this.startedAt = undefined; this.waiting = []; }
 }
 
 export function spokenKey(key: PlayKey): string | null {
@@ -93,12 +99,13 @@ export function spokenKey(key: PlayKey): string | null {
 
 export function createSound(nativeSpeech?: NativeSpeech): Sound {
   let context: AudioContext | undefined;
-  let settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: true };
+  let settings: Settings = defaultSettings();
   let scheduler = new ToneScheduler();
   const voices = new Set<OscillatorNode>();
   const gate = new SpeechGate();
   // Chromium may drop utterance events when the object is garbage collected.
   let current: SpeechSynthesisUtterance | undefined;
+  let lastText: string | null = null;
 
   const ensureContext = () => {
     if (!context) context = new AudioContext({ latencyHint: 'interactive' });
@@ -109,6 +116,7 @@ export function createSound(nativeSpeech?: NativeSpeech): Sound {
     voices.clear();
   };
   const stopSpeech = () => {
+    speechGeneration++;
     nativeSpeech?.stopSpeaking();
     const wasBusy = gate.busy || gate.stuck;
     gate.clear();
@@ -117,7 +125,7 @@ export function createSound(nativeSpeech?: NativeSpeech): Sound {
     // before speak() is what wedges the synthesizer.
     if (wasBusy) try { window.speechSynthesis?.cancel(); } catch { /* speech remains optional */ }
   };
-  const utter = (text: string) => {
+  const utterInBrowser = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 0.86;
     utterance.pitch = 1.08;
@@ -135,20 +143,27 @@ export function createSound(nativeSpeech?: NativeSpeech): Sound {
     current = utterance;
     window.speechSynthesis.speak(utterance);
   };
-  const speakInBrowser = (text: string) => {
-    if (!('speechSynthesis' in window)) return;
+  let speechGeneration = 0;
+  const utter = (text: string) => {
+    if (!nativeSpeech) { utterInBrowser(text); return; }
+    const generation = speechGeneration;
+    void nativeSpeech.speak(text, settings.volume).then(handled => {
+      if (generation !== speechGeneration) return;
+      if (!handled) { utterInBrowser(text); return; }
+      const next = gate.finished();
+      if (next !== null) utter(next);
+    }).catch(() => {
+      if (generation === speechGeneration) utterInBrowser(text);
+    });
+  };
+  const say = (text: string | null, preserve = false) => {
+    if (text) lastText = text;
+    if (!text || !settings.sound || settings.volume <= 0 || !('speechSynthesis' in window)) return;
     if (gate.stuck) stopSpeech();
-    const now = gate.accept(text);
+    const now = gate.accept(text, preserve);
     if (now !== null) utter(now);
   };
-  const speak = (key: PlayKey) => {
-    const text = spokenKey(key);
-    if (!text || !settings.sound || settings.volume <= 0) return;
-    if (!nativeSpeech) { speakInBrowser(text); return; }
-    void nativeSpeech.speak(text, settings.volume)
-      .then(handled => { if (!handled) speakInBrowser(text); })
-      .catch(() => speakInBrowser(text));
-  };
+
 
   return {
     async unlock() {
@@ -161,7 +176,7 @@ export function createSound(nativeSpeech?: NativeSpeech): Sound {
       } catch { /* sound remains optional */ }
     },
     accept(key) {
-      if (settings.audioMode === 'speech') { speak(key); return; }
+      if (settings.audioMode === 'speech') { say(spokenKey(key)); return; }
       try {
         const audio = ensureContext();
         // A suspended context freezes its clock. Discard input until it resumes
@@ -184,12 +199,14 @@ export function createSound(nativeSpeech?: NativeSpeech): Sound {
         oscillator.stop(start + tone.duration);
       } catch { /* unsupported or unavailable audio continues silently */ }
     },
+    say,
+    repeat() { say(lastText); },
     configure(next) {
       const modeChanged = next.audioMode !== settings.audioMode;
       settings = { ...next };
       if (modeChanged || !settings.sound || settings.volume <= 0) { stopVoices(); stopSpeech(); }
     },
-    stop() { scheduler.stop(); stopVoices(); stopSpeech(); },
+    stop() { lastText = null; scheduler.stop(); stopVoices(); stopSpeech(); },
     dispose() { scheduler.stop(); stopVoices(); stopSpeech(); if (context) void context.close(); context = undefined; },
   };
 }

@@ -3,7 +3,7 @@ import type { PlayKey, Settings } from '../src/shared/contracts';
 import { spokenKey, SpeechGate, STUCK_SPEECH_MS, ToneScheduler } from '../src/renderer/audio';
 import { speechArguments } from '../src/main/speech';
 
-const settings: Settings = { sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: false };
+const settings: Settings = { playMode: 'free', sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: false };
 const event = (index: number, phase: PlayKey['phase'] = 'down'): PlayKey => ({ phase, code: `Key${index}`, label: 'A', category: 'letter', colorIndex: index % 8, at: index });
 
 describe('tone scheduler', () => {
@@ -73,6 +73,20 @@ describe('speech gate', () => {
     expect(gate.accept('D')).toBe('D');
   });
 
+  it('retains every correct letter in order while coalescing wrong guesses', () => {
+    const gate = new SpeechGate(() => 0);
+    gate.accept('Find the A');
+    gate.accept('A! Find the P', true);
+    gate.accept('Z');
+    gate.accept('P! Find the P', true);
+    gate.accept('X');
+    gate.accept('Y');
+    expect(gate.finished()).toBe('A! Find the P');
+    expect(gate.finished()).toBe('P! Find the P');
+    expect(gate.finished()).toBe('Y');
+    expect(gate.finished()).toBeNull();
+  });
+
   it('never asks the caller to cancel between utterances', () => {
     const gate = new SpeechGate(() => 0);
     gate.accept('A');
@@ -91,5 +105,32 @@ describe('speech gate', () => {
     now = 1000 + STUCK_SPEECH_MS;
     expect(gate.stuck).toBe(true);
     expect(gate.accept('C')).toBe('C');
+  });
+});
+
+describe('native speech sequencing', () => {
+  it('waits for native speech to finish before speaking correct-letter feedback and later guesses', async () => {
+    const { createSound } = await import('../src/renderer/audio');
+    const { vi } = await import('vitest');
+    vi.stubGlobal('window', { speechSynthesis: { cancel: vi.fn() } });
+    const completions: ((handled: boolean) => void)[] = [];
+    const speak = vi.fn(() => new Promise<boolean>(resolve => completions.push(resolve)));
+    const sound = createSound({ speak, stopSpeaking: vi.fn() });
+    sound.say('Find the A');
+    sound.say('A! Find the P', true);
+    sound.say('Z');
+    sound.say('X');
+    expect(speak.mock.calls).toHaveLength(1);
+    completions.shift()!(true);
+    await Promise.resolve();
+    expect(speak).toHaveBeenLastCalledWith('A! Find the P', 1);
+    completions.shift()!(true);
+    await Promise.resolve();
+    expect(speak).toHaveBeenLastCalledWith('X', 1);
+    sound.stop();
+    completions.shift()!(true);
+    await Promise.resolve();
+    expect(speak.mock.calls).toHaveLength(3);
+    vi.unstubAllGlobals();
   });
 });

@@ -60,7 +60,7 @@ export function createUnlockRecognizer(): UnlockRecognizer {
 
       // A repeat is evidence that K is still physically down. This preserves
       // automatic completion on systems with key repeat enabled.
-      if (event.repeat && isK(event)) {
+      if (event.type === 'down' && event.repeat && isK(event)) {
         if (!hasRequiredModifiers(event)) {
           reset();
           return false;

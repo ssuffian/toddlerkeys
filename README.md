@@ -6,6 +6,10 @@ Licensed under the [GNU General Public License v3.0](LICENSE).
 
 Letters, numbers, and symbols create colorful play scenes. A recent-key row reinforces letter and number sequences, and parents can choose musical tones or spoken key names. Modifier and other control keys are ignored during play.
 
+Choose **Spell a word** to build a short word one letter at a time. A picture clue appears from the start, and the on-screen keyboard highlights the next letter after five seconds. Each correct letter gets a small celebration and is spoken aloud, even when a wrong guess follows immediately. Wrong guesses are spoken aloud without losing progress. Press Space to repeat the current instruction (or the last spoken key in Free play). Completing the word reveals a bigger picture, fireworks, and spoken congratulations before the next word. Prompts follow the Sound and Volume settings.
+
+New users start in **Free play**, with spoken keys at 100% volume, Soft Synth selected for musical tones, mixed pictures, lockdown enabled, and the exit reminder visible. Reduced motion follows the device preference. Saved preferences take priority.
+
 ## Ways to play
 
 - **Web/PWA:** [play at toddlerkeys.vercel.app](https://toddlerkeys.vercel.app), with installable best-effort fullscreen behavior.

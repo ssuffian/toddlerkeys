@@ -19,15 +19,22 @@ export class LinuxSpeech {
 
   constructor(private readonly spawnProcess: Spawn = spawn) {}
 
-  speak(text: unknown, volume: unknown): boolean {
+  speak(text: unknown, volume: unknown): Promise<boolean> {
     const args = speechArguments(text, volume);
-    if (!args) return false;
+    if (!args) return Promise.resolve(false);
     this.stop();
     const child = this.spawnProcess('espeak-ng', args, { stdio: 'ignore', windowsHide: true });
     this.child = child;
-    child.once('error', () => { if (this.child === child) this.child = undefined; });
-    child.once('exit', () => { if (this.child === child) this.child = undefined; });
-    return true;
+    return new Promise(resolve => {
+      child.once('error', () => {
+        if (this.child === child) this.child = undefined;
+        resolve(false);
+      });
+      child.once('exit', () => {
+        if (this.child === child) this.child = undefined;
+        resolve(true);
+      });
+    });
   }
 
   stop(): void {

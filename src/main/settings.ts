@@ -5,17 +5,18 @@ import type { AudioMode, Instrument, PictureTheme, Settings } from '../shared/co
 const instruments = new Set<Instrument>(['marimba', 'piano', 'bells', 'softSynth']);
 const audioModes = new Set<AudioMode>(['tones', 'speech']);
 const pictureThemes = new Set<PictureTheme>(['mixed', 'animals', 'food', 'transport']);
-export const defaultSettings = (reducedMotion = false): Settings => ({ sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion, lockdownMode: false, showExitHint: true });
+export { defaultSettings } from '../shared/settings';
 
 export function sanitizeSettings(value: unknown, fallback: Settings): Settings {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { ...fallback };
   const candidate = value as Partial<Settings>;
   if (typeof candidate.sound !== 'boolean' || typeof candidate.reducedMotion !== 'boolean' || typeof candidate.volume !== 'number' || !Number.isFinite(candidate.volume)) return { ...fallback };
   return {
+    playMode: candidate.playMode === 'find' || candidate.playMode === 'free' ? candidate.playMode : fallback.playMode,
     sound: candidate.sound,
     audioMode: typeof candidate.audioMode === 'string' && audioModes.has(candidate.audioMode as AudioMode) ? candidate.audioMode as AudioMode : fallback.audioMode,
     volume: Math.max(0, Math.min(1, candidate.volume)),
-    instrument: typeof candidate.instrument === 'string' && instruments.has(candidate.instrument as Instrument) ? candidate.instrument as Instrument : 'marimba',
+    instrument: typeof candidate.instrument === 'string' && instruments.has(candidate.instrument as Instrument) ? candidate.instrument as Instrument : fallback.instrument,
     pictureTheme: typeof candidate.pictureTheme === 'string' && pictureThemes.has(candidate.pictureTheme as PictureTheme) ? candidate.pictureTheme as PictureTheme : fallback.pictureTheme,
     reducedMotion: candidate.reducedMotion,
     lockdownMode: typeof candidate.lockdownMode === 'boolean' ? candidate.lockdownMode : false,

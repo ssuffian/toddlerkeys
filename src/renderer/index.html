@@ -9,53 +9,69 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <link rel="stylesheet" href="/styles.css">
     <title>Toddler Keys</title>
   </head>
   <body>
     <main id="app">
       <section id="setup" class="setup-view" aria-labelledby="app-title">
-        <div class="setup-copy">
-          <p class="eyebrow">A little space to explore</p>
-          <h1 id="app-title">Toddler<br><span>Keys</span></h1>
-          <p class="intro">Big keys, gentle sounds, and a moment to play together.</p>
-          <p id="browser-note" class="browser-note" hidden><strong>Browser play</strong> uses fullscreen to reduce distractions. Your computer’s system shortcuts can still leave the game. <a href="/download/">Download the stronger desktop app</a>.</p>
-          <p class="co-play">Try saying: “You pressed B. Can we find B on the keyboard?”</p>
-        </div>
+        <header class="setup-header">
+          <h1 id="app-title">Toddler <span>Keys</span></h1>
+          <nav class="setup-nav" aria-label="Setup">
+            <button id="show-home" aria-controls="home-page" aria-pressed="true">Play</button>
+            <button id="show-settings" aria-controls="settings-page" aria-pressed="false">Settings</button>
+          </nav>
+        </header>
         <div class="setup-panel">
-          <div class="practice-card">
-            <p class="step">Parent exit practice</p>
-            <h2>Try the secret exit once</h2>
-            <div class="practice-action">
-              <p>Hold <strong>Control + Shift + K</strong> for two seconds. Keep holding until the app confirms it.</p>
-              <div class="key-chord" aria-label="Control plus Shift plus K">
-                <kbd>Ctrl</kbd><span>+</span><kbd>Shift</kbd><span>+</span><kbd>K</kbd>
+          <div class="setup-pages">
+            <section id="home-page" class="setup-page" aria-labelledby="mode-title">
+              <h2 id="mode-title">What shall we play?</h2>
+              <fieldset class="mode-choices">
+                <legend class="visually-hidden">Play mode</legend>
+                <label class="mode-choice"><input type="radio" name="play-mode" value="free" checked><span><strong>Free play</strong><small>Every key makes a little magic.</small></span></label>
+                <label class="mode-choice"><input type="radio" name="play-mode" value="find"><span><strong>Spell a word</strong><small>Find each letter and bring a picture to life.</small></span></label>
+              </fieldset>
+              <div class="practice-card">
+                <div class="practice-copy"><h3>Before you start: try the parent exit</h3><p>Hold for two seconds, then release.</p></div>
+                <div class="key-chord" aria-label="Control plus Shift plus K"><kbd>Ctrl</kbd><span>+</span><kbd>Shift</kbd><span>+</span><kbd>K</kbd></div>
+                <div id="hold-meter" class="hold-meter" role="progressbar" aria-label="Exit key hold progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+                <p id="progress" class="practice-progress" role="status">Try the sequence now.</p>
               </div>
+              <p id="browser-note" class="browser-note" hidden><strong>Browser play</strong> uses fullscreen to reduce distractions. Your computer’s system shortcuts can still leave the game. <a href="/download/">Download the stronger desktop app</a>.</p>
+            </section>
+            <section id="settings-page" class="setup-page" aria-labelledby="settings-title" hidden>
+              <h2 id="settings-title" tabindex="-1">Settings</h2>
+              <p class="settings-intro">Make it comfortable. Changes save automatically.</p>
+              <div class="settings-grid">
+                <fieldset class="preferences"><legend>Sound</legend>
+                  <label class="toggle-row"><span><strong>Sound</strong><small>Musical tones or spoken keys</small></span><input id="sound" type="checkbox"><i aria-hidden="true"></i></label>
+                  <label class="volume-row" for="volume"><span>Volume</span><input id="volume" type="range" min="0" max="1" step="0.05"><output id="volume-value" for="volume">100%</output></label>
+                  <label class="instrument-row" for="audio-mode"><span><strong>Key sound</strong><small>Tones or spoken keys</small></span><select id="audio-mode"><option value="tones">Musical tones</option><option value="speech">Say keys aloud</option></select></label>
+                  <label id="instrument-row" class="instrument-row" for="instrument"><span><strong>Instrument</strong><small>Choose the musical tone</small></span><select id="instrument"><option value="marimba">Marimba</option><option value="piano">Piano</option><option value="bells">Bells</option><option value="softSynth">Soft Synth</option></select></label>
+                </fieldset>
+                <fieldset class="preferences"><legend>Pictures &amp; comfort</legend>
+                  <label class="instrument-row" for="picture-theme"><span><strong>Emoji theme</strong><small>One matching picture for each letter</small></span><select id="picture-theme"><option value="mixed">Mixed</option><option value="animals">Animals</option><option value="food">Food</option><option value="transport">Transportation</option></select></label>
+                  <label class="toggle-row"><span><strong>Reduce motion</strong><small>Keep everything calm and still</small></span><input id="motion" type="checkbox"><i aria-hidden="true"></i></label>
+                  <label class="toggle-row"><span><strong>Show exit reminder</strong><small>Display the parent shortcut during play</small></span><input id="exit-hint" type="checkbox"><i aria-hidden="true"></i></label>
+                  <label class="toggle-row"><span><strong>Lockdown mode</strong><small id="lockdown-detail">Disable Escape; system screenshots and OS shortcuts may still work</small></span><input id="lockdown" type="checkbox"><i aria-hidden="true"></i></label>
+                </fieldset>
+              </div>
+            </section>
+          </div>
+          <footer class="setup-footer">
+            <div id="home-actions" class="actions">
+              <button id="quit" class="quiet-button">Quit</button>
+              <button id="start" disabled><span>Start playing</span><b aria-hidden="true">→</b></button>
             </div>
-            <div id="hold-meter" class="hold-meter" role="progressbar" aria-label="Exit key hold progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
-            <p id="progress" class="practice-progress" role="status">Try the sequence now.</p>
-          </div>
-          <fieldset class="preferences">
-            <legend>Play settings</legend>
-            <label class="toggle-row"><span><strong>Sound</strong><small>Musical tones or spoken keys</small></span><input id="sound" type="checkbox"><i aria-hidden="true"></i></label>
-            <label class="instrument-row" for="audio-mode"><span><strong>Key sound</strong><small>Tones or spoken keys</small></span><select id="audio-mode"><option value="tones">Musical tones</option><option value="speech">Say keys aloud</option></select></label>
-            <label id="instrument-row" class="instrument-row" for="instrument"><span><strong>Instrument</strong><small>Choose the musical tone</small></span><select id="instrument"><option value="marimba">Marimba</option><option value="piano">Piano</option><option value="bells">Bells</option><option value="softSynth">Soft Synth</option></select></label>
-            <label class="instrument-row" for="picture-theme"><span><strong>Emoji theme</strong><small>One matching picture for each letter</small></span><select id="picture-theme"><option value="mixed">Mixed</option><option value="animals">Animals</option><option value="food">Food</option><option value="transport">Transportation</option></select></label>
-            <label class="volume-row" for="volume"><span>Volume</span><input id="volume" type="range" min="0" max="1" step="0.05"><output id="volume-value" for="volume">15%</output></label>
-            <label class="toggle-row"><span><strong>Reduce motion</strong><small>Keep everything calm and still</small></span><input id="motion" type="checkbox"><i aria-hidden="true"></i></label>
-            <label class="toggle-row"><span><strong>Show exit reminder</strong><small>Display the parent shortcut during play</small></span><input id="exit-hint" type="checkbox"><i aria-hidden="true"></i></label>
-            <label class="toggle-row"><span><strong>Lockdown mode</strong><small id="lockdown-detail">Disable Escape; system screenshots and OS shortcuts may still work</small></span><input id="lockdown" type="checkbox"><i aria-hidden="true"></i></label>
-          </fieldset>
-          <div class="actions">
-            <button id="start" disabled><span>Start playing</span><b aria-hidden="true">→</b></button>
-            <button id="quit" class="quiet-button">Quit</button>
-          </div>
-          <p id="settings-status" class="save-status" role="status" aria-live="polite"></p>
+            <div id="settings-actions" class="actions" hidden><p id="settings-status" class="save-status" role="status" aria-live="polite"></p><button id="settings-done" class="done-button">Done</button></div>
+          </footer>
         </div>
       </section>
       <section id="play" class="play-view" hidden aria-label="Keyboard play space">
         <div class="ambient-shape shape-one" aria-hidden="true"></div>
         <div class="ambient-shape shape-two" aria-hidden="true"></div>
         <div class="ambient-shape shape-three" aria-hidden="true"></div>
+        <div id="find-prompt" class="find-prompt" role="status" aria-live="polite" hidden></div>
         <div id="scene" class="scene"></div>
         <div id="key-history" class="key-history" aria-label="Recent letters and numbers" aria-live="polite"></div>
         <div id="play-exit-progress" class="play-exit-progress" hidden aria-live="polite">

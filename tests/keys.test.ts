@@ -31,7 +31,8 @@ describe('key normalization', () => {
     expect(first.colorIndex).toBeLessThan(8);
   });
 
-  it('filters control keys out of the play experience', () => {
+  it('passes Space for repeat and filters other control keys out of play', () => {
+    expect(normalizePlayableKey(key({ type: 'down', code: 'Space', key: ' ' }))).toMatchObject({ code: 'Space', category: 'control' });
     expect(normalizePlayableKey(key({ type: 'down', code: 'ControlLeft', key: 'Control' }))).toBeNull();
     expect(normalizePlayableKey(key({ type: 'down', code: 'ArrowLeft', key: 'ArrowLeft' }))).toBeNull();
     expect(normalizePlayableKey(key({ type: 'down', code: 'KeyA', key: 'a' }))).toMatchObject({ label: 'a', category: 'letter' });
