@@ -5,7 +5,7 @@ import type { LetterPicture } from './letter-pictures';
 export const HINT_DELAY = 5000;
 export const MATCH_DELAY = 6500;
 
-export function createFindGame(root: HTMLElement, say: (text: string, preserve?: boolean) => void, random = Math.random) {
+export function createFindGame(root: HTMLElement, say: (text: string, preserve?: boolean) => void, random = Math.random, chime = () => {}) {
   const prompt = document.createElement('span');
   prompt.className = 'find-instruction';
   const clue = document.createElement('div');
@@ -53,7 +53,6 @@ export function createFindGame(root: HTMLElement, say: (text: string, preserve?:
     }
   }
   root.replaceChildren(clue, prompt, slots, keyboard, celebration);
-  const held = new Set<string>();
   let theme: PictureTheme = 'mixed';
   let word: LetterPicture | undefined;
   let position = 0;
@@ -61,33 +60,54 @@ export function createFindGame(root: HTMLElement, say: (text: string, preserve?:
   let matched = false;
   let target = '';
   let instruction = '';
-  let celebratedPosition = -1;
-  let letterTimer: ReturnType<typeof setTimeout> | undefined;
+  let letterSlots: HTMLElement[] = [];
+  const letterTimers = new Set<ReturnType<typeof setTimeout>>();
   let hintTimer: ReturnType<typeof setTimeout> | undefined;
   let nextTimer: ReturnType<typeof setTimeout> | undefined;
-  const clearTimers = () => { clearTimeout(hintTimer); clearTimeout(nextTimer); clearTimeout(letterTimer); };
+  const clearTimers = () => {
+    clearTimeout(hintTimer); clearTimeout(nextTimer);
+    for (const timer of letterTimers) clearTimeout(timer);
+    letterTimers.clear();
+  };
   const clearKeyHints = () => {
     for (const key of keys.values()) { key.classList.remove('hint', 'found'); key.removeAttribute('aria-label'); }
   };
   const showProgress = () => {
-    slots.replaceChildren();
-    for (let index = 0; index < word!.word.length; index++) {
-      const slot = document.createElement('span');
-      slot.className = 'spelling-slot';
-      slot.textContent = word!.word[index].toUpperCase();
+    for (const [index, slot] of letterSlots.entries()) {
       slot.classList.toggle('complete', index < position);
       slot.classList.toggle('current', index === position);
-      if (index === celebratedPosition) {
-        slot.classList.add('letter-celebration');
-        const stars = document.createElement('span');
-        stars.className = 'letter-stars';
-        stars.textContent = '✦ ✨ ✦';
-        stars.setAttribute('aria-hidden', 'true');
-        slot.append(stars);
-      }
       if (index === position) slot.setAttribute('aria-current', 'step');
-      slots.append(slot);
+      else slot.removeAttribute('aria-current');
     }
+  };
+  const celebrateLetter = (index: number) => {
+    const slot = letterSlots[index];
+    slot.classList.add('letter-celebration');
+    const stars = document.createElement('span');
+    stars.className = 'letter-stars';
+    stars.textContent = '✦ ✨ ✦';
+    stars.setAttribute('aria-hidden', 'true');
+    const confetti = document.createElement('span');
+    confetti.className = 'letter-confetti';
+    confetti.setAttribute('aria-hidden', 'true');
+    for (let piece = 0; piece < 16; piece++) {
+      const flake = document.createElement('i');
+      const angle = Math.PI + (piece + .5) * Math.PI / 16;
+      flake.className = `confetti-piece color-${piece % 8}`;
+      flake.style.setProperty('--confetti-x', `${Math.cos(angle) * (45 + piece % 3 * 15)}px`);
+      flake.style.setProperty('--confetti-y', `${Math.sin(angle) * (55 + piece % 3 * 18)}px`);
+      flake.style.setProperty('--confetti-turn', `${piece % 2 ? 240 : -210}deg`);
+      confetti.append(flake);
+    }
+    slot.append(stars, confetti);
+    const timer = setTimeout(() => {
+      letterTimers.delete(timer);
+      slot.classList.remove('letter-celebration');
+      slot.replaceChildren();
+      slot.textContent = word!.word[index].toUpperCase();
+    }, 850);
+    letterTimers.add(timer);
+    chime();
   };
   const askLetter = (correctLetter?: string) => {
     clearKeyHints();
@@ -108,30 +128,34 @@ export function createFindGame(root: HTMLElement, say: (text: string, preserve?:
     root.classList.remove('word-complete');
     word = nextWord(theme, word?.word ?? '', random);
     position = 0;
-    celebratedPosition = -1;
+    letterSlots = Array.from(word.word, letter => {
+      const slot = document.createElement('span');
+      slot.className = 'spelling-slot';
+      slot.textContent = letter.toUpperCase();
+      return slot;
+    });
+    slots.replaceChildren(...letterSlots);
     picture.textContent = word.icon;
     picture.setAttribute('aria-label', word.word);
     wordTitle.textContent = `Let’s spell ${word.word.toUpperCase()}`;
     askLetter();
   };
   return {
-    start() { held.clear(); active = true; root.hidden = false; ask(); },
+    start() { active = true; root.hidden = false; ask(); },
     accept(key: PlayKey): boolean {
-      if (!active) return false;
-      if (key.phase === 'up') { held.delete(key.code); return false; }
-      if (held.has(key.code)) return false;
-      held.add(key.code);
+      if (!active || key.phase === 'up') return false;
+      // Both bridges filter auto-repeat before delivering PlayKey events.
+      // Each down is a fresh press, even if a prior release was lost.
       if (key.code === 'Space') { say(instruction); return false; }
       if (matched) return false;
       if (key.category !== 'letter') return false;
       if (key.label.toUpperCase() !== target) { say(key.label); return false; }
       clearTimeout(hintTimer);
       const correctLetter = target;
-      celebratedPosition = position;
+      const correctPosition = position;
       position++;
-      clearTimeout(letterTimer);
-      letterTimer = setTimeout(() => { celebratedPosition = -1; showProgress(); }, 850);
       showProgress();
+      celebrateLetter(correctPosition);
       if (position < word!.word.length) {
         askLetter(correctLetter);
         return true;
@@ -150,6 +174,6 @@ export function createFindGame(root: HTMLElement, say: (text: string, preserve?:
     },
     setPictureTheme(next: PictureTheme) { theme = next; },
     setReducedMotion(enabled: boolean) { root.classList.toggle('reduced-motion', enabled); },
-    stop() { held.clear(); celebration.hidden = true; active = false; clearTimers(); root.hidden = true; },
+    stop() { celebration.hidden = true; active = false; clearTimers(); root.hidden = true; },
   };
 }

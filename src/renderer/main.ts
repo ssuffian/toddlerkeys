@@ -35,7 +35,7 @@ const appVersion = select<HTMLElement>('#app-version');
 const scene = createScene(sceneRoot);
 const history = createKeyHistory(select<HTMLElement>('#key-history'));
 const sound = createSound(bridge);
-const findGame = createFindGame(select<HTMLElement>('#find-prompt'), (text, preserve) => sound.say(text, preserve));
+const findGame = createFindGame(select<HTMLElement>('#find-prompt'), (text, preserve) => sound.say(text, preserve), Math.random, () => sound.celebrate());
 let latest: AppSnapshot | undefined;
 let lastState: AppSnapshot['state'] | undefined;
 let renderedSettings = '';

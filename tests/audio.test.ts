@@ -1,10 +1,53 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { PlayKey, Settings } from '../src/shared/contracts';
-import { spokenKey, SpeechGate, STUCK_SPEECH_MS, ToneScheduler } from '../src/renderer/audio';
+import { createSound, spokenKey, SpeechGate, STUCK_SPEECH_MS, ToneScheduler } from '../src/renderer/audio';
 import { speechArguments } from '../src/main/speech';
 
 const settings: Settings = { playMode: 'free', sound: true, audioMode: 'tones', volume: 0.15, instrument: 'marimba', pictureTheme: 'mixed', reducedMotion: false, lockdownMode: false, showExitHint: false };
 const event = (index: number, phase: PlayKey['phase'] = 'down'): PlayKey => ({ phase, code: `Key${index}`, label: 'A', category: 'letter', colorIndex: index % 8, at: index });
+
+describe('success chime', () => {
+  it('unlocks in speech mode, respects volume and mute, and replaces rapid chimes without queuing', async () => {
+    const oscillators: { stop: ReturnType<typeof vi.fn> }[] = [];
+    const levels: number[] = [];
+    class AudioStub {
+      state = 'suspended';
+      currentTime = 0;
+      destination = {};
+      async resume() { this.state = 'running'; }
+      createOscillator() {
+        const oscillator = {
+          type: '', frequency: { setValueAtTime: vi.fn() },
+          connect: (gain: unknown) => gain, addEventListener: vi.fn(),
+          start: vi.fn(), stop: vi.fn(), disconnect: vi.fn(),
+        };
+        oscillators.push(oscillator);
+        return oscillator;
+      }
+      createGain() {
+        return { gain: { setValueAtTime() {}, exponentialRampToValueAtTime(level: number) { levels.push(level); } }, connect() {}, disconnect() {} };
+      }
+    }
+    vi.stubGlobal('AudioContext', AudioStub);
+    const sound = createSound();
+    try {
+      sound.configure({ ...settings, playMode: 'find', audioMode: 'speech', volume: .5 });
+      await sound.unlock();
+      sound.celebrate();
+      expect(oscillators).toHaveLength(1);
+      expect(levels).toContain(.05);
+      sound.celebrate();
+      expect(oscillators).toHaveLength(2);
+      expect(oscillators[0].stop).toHaveBeenCalledTimes(2);
+      sound.configure({ ...settings, sound: false });
+      expect(oscillators[1].stop).toHaveBeenCalledTimes(2);
+      sound.celebrate();
+      sound.configure({ ...settings, volume: 0 });
+      sound.celebrate();
+      expect(oscillators).toHaveLength(2);
+    } finally { sound.stop(); vi.unstubAllGlobals(); }
+  });
+});
 
 describe('tone scheduler', () => {
   it('emits nothing for muted, zero-volume, or keyup events', () => {

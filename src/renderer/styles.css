@@ -185,6 +185,17 @@ button:focus-visible { outline: 3px solid rgba(214, 109, 74, .55); outline-offse
 
 .spelling-slot.letter-celebration { position: relative; animation: letter-cheer 550ms ease-out; box-shadow: 0 0 0 5px #f3c65c70; }
 .letter-stars { position: absolute; left: 50%; top: -20px; width: 110px; transform: translateX(-50%); color: #b8802a; font-size: 25px; white-space: nowrap; animation: letter-stars 850ms ease-out both; pointer-events: none; }
+.letter-confetti { position: absolute; inset: 0; pointer-events: none; }
+.confetti-piece { position: absolute; left: 50%; top: 15%; width: 7px; height: 11px; border-radius: 2px; opacity: 0; animation: letter-confetti 800ms ease-out both; }
+.confetti-piece:nth-child(3n) { width: 8px; height: 8px; border-radius: 50%; }
+@keyframes letter-confetti {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(.4); }
+  12% { opacity: 1; }
+  45% { opacity: 1; transform: translate(var(--confetti-x), var(--confetti-y)) rotate(var(--confetti-turn)); }
+  100% { opacity: 0; transform: translate(var(--confetti-x), calc(var(--confetti-y) + 65px)) rotate(var(--confetti-turn)) scale(.6); }
+}
+.reduced-motion .confetti-piece { animation: none; }
+@media (prefers-reduced-motion: reduce) { .confetti-piece { animation: none; } }
 @keyframes letter-cheer {
   35% { transform: translateY(-8px) scale(1.16) rotate(-5deg); }
   70% { transform: translateY(-2px) scale(1.06) rotate(3deg); }

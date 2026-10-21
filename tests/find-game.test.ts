@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { nextWord, spellingWords } from '../src/renderer/spelling-words';
 import { SpeechGate } from '../src/renderer/audio';
 import { createFindGame, HINT_DELAY, MATCH_DELAY } from '../src/renderer/find-game';
+import { normalizePlayableKey } from '../src/shared/keys';
+import { key } from './helpers';
 
 // A minimal element surface lets the round lifecycle run with fake timers.
 class ElementStub {
@@ -31,16 +33,22 @@ function gameFixture() {
   vi.stubGlobal('document', { createElement: () => new ElementStub() });
   const root = new ElementStub();
   const say = vi.fn();
-  const game = createFindGame(root as unknown as HTMLElement, say, () => 0);
+  const chime = vi.fn();
+  const game = createFindGame(root as unknown as HTMLElement, say, () => 0, chime);
   game.start();
   const [clue, prompt, slots, keyboard, celebration] = root.children;
   const keys = keyboard.children.flatMap(row => row.children);
-  return { game, root, clue, prompt, slots, keys, celebration, say };
+  return { game, root, clue, prompt, slots, keys, celebration, say, chime };
 }
 
 const letter = (label: string, phase: 'down' | 'up' = 'down') => ({
   phase, code: `Key${label}`, label, category: 'letter' as const, colorIndex: 0, at: 0,
 });
+
+function press(game: ReturnType<typeof createFindGame>, label: string, repeat = false) {
+  const normalized = normalizePlayableKey(key({ type: 'down', code: `Key${label}`, key: label, repeat }));
+  return normalized ? game.accept(normalized) : false;
+}
 
 describe('spelling rounds', () => {
   it('shows the picture from the start and speaks wrong guesses without advancing', () => {
@@ -61,7 +69,7 @@ describe('spelling rounds', () => {
     const { game, prompt, slots, celebration, root, say } = gameFixture();
     game.accept(letter('A')); game.accept(letter('A', 'up'));
     expect(prompt.textContent).toBe('Find the P');
-    game.accept(letter('P')); game.accept(letter('P'));
+    press(game, 'P'); press(game, 'P', true);
     expect(slots.children.filter(slot => slot.classes.has('complete'))).toHaveLength(2);
     expect(celebration.hidden).toBe(true);
     game.accept(letter('P', 'up')); game.accept(letter('P')); game.accept(letter('P', 'up'));
@@ -81,6 +89,32 @@ describe('spelling rounds', () => {
     expect(root.classes.has('word-complete')).toBe(false);
   });
 
+  it('accepts a fresh press after an early guess even if its release was missed', () => {
+    const { game, prompt, slots } = gameFixture();
+    expect(press(game, 'P')).toBe(false);
+    expect(press(game, 'A')).toBe(true);
+    expect(press(game, 'P')).toBe(true);
+    expect(slots.children.filter(slot => slot.classes.has('complete'))).toHaveLength(2);
+    // Holding the key still cannot fill the second P, but a fresh press can.
+    expect(press(game, 'P', true)).toBe(false);
+    expect(press(game, 'P')).toBe(true);
+    expect(prompt.textContent).toBe('Find the L');
+    for (const char of 'LE') expect(press(game, char)).toBe(true);
+    expect(prompt.textContent).toBe('You spelled APPLE!');
+  });
+
+  it('accepts rapid overlapping presses without waiting for feedback or animation', () => {
+    const { game, prompt, slots } = gameFixture();
+    expect(press(game, 'A')).toBe(true);
+    expect(press(game, 'P')).toBe(true);
+    game.accept(letter('P', 'up'));
+    expect(press(game, 'P')).toBe(true);
+    expect(press(game, 'L')).toBe(true);
+    expect(press(game, 'E')).toBe(true);
+    expect(prompt.textContent).toBe('You spelled APPLE!');
+    expect(slots.children.every(slot => slot.classes.has('complete'))).toBe(true);
+  });
+
   it('celebrates each correct letter and preserves its speech before rapid wrong guesses', () => {
     const { game, slots, say } = gameFixture();
     const gate = new SpeechGate(() => 0);
@@ -97,6 +131,33 @@ describe('spelling rounds', () => {
     expect(slots.children[0].classes.has('letter-celebration')).toBe(false);
   });
 
+  it('gives rapid correct letters independent confetti bursts and chimes', () => {
+    const { game, slots, chime } = gameFixture();
+    game.accept(letter('Z'));
+    expect(chime).not.toHaveBeenCalled();
+    game.accept(letter('A'));
+    const firstSlot = slots.children[0];
+    vi.advanceTimersByTime(200);
+    game.accept(letter('P'));
+    expect(slots.children[0]).toBe(firstSlot);
+    expect(chime).toHaveBeenCalledTimes(2);
+    for (const slot of slots.children.slice(0, 2)) {
+      expect(slot.classes.has('letter-celebration')).toBe(true);
+      expect(slot.children[1].className).toBe('letter-confetti');
+      expect(slot.children[1].children).toHaveLength(16);
+    }
+    vi.advanceTimersByTime(650);
+    expect(firstSlot.classes.has('letter-celebration')).toBe(false);
+    expect(firstSlot.children).toHaveLength(0);
+    expect(slots.children[1].classes.has('letter-celebration')).toBe(true);
+    vi.advanceTimersByTime(200);
+    expect(slots.children[1].classes.has('letter-celebration')).toBe(false);
+    for (const char of 'PLE') game.accept(letter(char));
+    expect(chime).toHaveBeenCalledTimes(5);
+    game.stop();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it('repeats the current instruction with Space without changing progress', () => {
     const { game, prompt, slots, say } = gameFixture();
     const space = { ...letter(' '), code: 'Space', category: 'control' as const };
@@ -107,7 +168,8 @@ describe('spelling rounds', () => {
     expect(prompt.textContent).toBe('Find the P');
     expect(slots.children.filter(slot => slot.classes.has('complete'))).toHaveLength(1);
     const calls = say.mock.calls.length;
-    game.accept(space);
+    const repeatSpace = normalizePlayableKey(key({ type: 'down', code: 'Space', key: ' ', repeat: true }));
+    if (repeatSpace) game.accept(repeatSpace);
     expect(say).toHaveBeenCalledTimes(calls);
     game.accept({ ...space, phase: 'up' });
     game.accept(space);

@@ -34,13 +34,15 @@ Releases are signed and notarized locally, using the Apple credentials in your M
 
 Run `npm run release:mac` to test, build, sign, and notarize Apple silicon and Intel DMG downloads locally. It also produces ZIP fallbacks. The DMGs contain an Applications shortcut for the familiar drag-to-install flow, and both the app and final disk image are notarized and stapled.
 
-For a new Mac release, bump the version in `package.json`, commit and push the changes, then run `npm run publish:mac`. It checks GitHub publishing access before building, then uploads both DMGs and both ZIP fallbacks to the shared GitHub Release. The release tag comes from the `version` in `package.json`. It does not start a Linux build.
+For a new Mac release, bump the version in `package.json`, commit and push the changes, then run `npm run publish:mac`. It checks GitHub publishing access before building, then uploads both DMGs and both ZIP fallbacks to the shared GitHub Release. After uploading, it updates the version and both ZIP checksums in the `ssuffian/homebrew-tap` cask, so `brew upgrade --cask toddlerkeys` discovers the new Mac version. The release tag comes from the `version` in `package.json`. It does not start a Linux build.
 
 Mac and Linux use the same code version and GitHub release, but publish independently. Either platform can publish first; the other adds its downloads to that release later. Running a platform command again replaces only that platform's files.
 
 GitHub CLI (`gh`) must use an account with write access to `ssuffian/toddlerkeys`. Use `gh auth switch -h github.com -u ssuffian` to select the owner account. If the permission check asks for `workflow`, run `gh auth refresh -h github.com -s workflow` and approve in the browser while signed into that same account.
 
 If building succeeded but uploading failed, fix the authentication or network issue, then run `npm run publish:mac -- --upload-only`. This reuses the existing downloads without rebuilding or notarizing again, and resumes an incomplete draft release if one exists. The ZIP app versions must match `package.json`; rebuild after bumping the version.
+
+If uploading succeeds but the Homebrew update fails, run `npm run publish:brew`. This reads the uploaded ZIP SHA-256 digests from GitHub and updates `Casks/toddlerkeys.rb` in `ssuffian/homebrew-tap`. The active GitHub account must have write access to both repositories. The cask uses versioned URLs, supports Apple silicon and Intel, and requires macOS Ventura or newer (Electron's minimum).
 
 The release script explicitly refuses the Why Not Prosper team ID (`NGV7NNRRL2`) and will stop if personal team selection is ambiguous.
 
@@ -52,7 +54,7 @@ The repository signing key lives in the `APT_SIGNING_KEY` GitHub Actions secret.
 
 Users add `https://ssuffian.github.io/toddlerkeys` once using the commands on the download page. After that, `apt upgrade` and graphical Ubuntu/Debian software updaters discover new Toddler Keys releases normally.
 
-Release assets use stable names so `/download/` can link straight to the latest files without exposing the GitHub Releases interface. Keep those names in sync between the release scripts, Linux workflow, and download page.
+Release assets use stable names. The download page routes each platform through `/api/download`, which finds the newest published non-prerelease containing that asset. This continues working when Mac and Linux publish at different times; it does not assume the globally latest release contains both platforms. Vercel caches successful redirects for five minutes. Static preview servers do not run this API; verify downloads on Vercel. Keep those names in sync between the release scripts, Linux workflow, and download page.
 
 To rebuild Linux and republish the APT repository for the version in `package.json`, run `npm run publish:linux`. You can also open **Actions > Release Linux app > Run workflow** and enter the current tag, such as `v0.1.4`. Locally, `npm run make:linux -- --arch=x64` runs the same Forge build when executed on Linux. `scripts/build-apt-repository.sh` can reproduce the repository layout on a machine with `dpkg-scanpackages` and GnuPG installed.
 

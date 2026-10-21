@@ -37,14 +37,22 @@
           </div>
         </div>
         <div class="choices">
-          <a class="download-button primary" href="https://github.com/ssuffian/toddlerkeys/releases/latest/download/Toddler-Keys-macOS-Apple-Silicon.dmg">
+          <a class="download-button primary" href="/api/download?platform=mac-arm64">
             <span>Apple silicon</span>
             <small>M1, M2, M3, M4, and newer Macs</small>
           </a>
-          <a class="download-button" href="https://github.com/ssuffian/toddlerkeys/releases/latest/download/Toddler-Keys-macOS-Intel.dmg">
+          <a class="download-button" href="/api/download?platform=mac-x64">
             <span>Intel</span>
             <small>Most Macs from 2019 or earlier</small>
           </a>
+        </div>
+        <div class="install-steps" aria-label="Homebrew installation">
+          <p>Use Homebrew to install and keep Toddler Keys up to date:</p>
+          <pre><code>brew install --cask ssuffian/tap/toddlerkeys</code></pre>
+          <p>To update, quit Toddler Keys, then run:</p>
+          <pre><code>brew update
+brew upgrade --cask toddlerkeys</code></pre>
+          <p>Homebrew installs the app in Applications. Updates happen when you run the upgrade command. With a DMG installation, download a newer DMG and replace the app in Applications.</p>
         </div>
         <details>
           <summary>Not sure which Mac you have?</summary>
@@ -76,11 +84,11 @@ sudo apt install toddlerkeys</code></pre>
           <summary>Prefer a one-time download?</summary>
           <p>These installers work without adding the update source. Choose x64 for most Intel and AMD computers, or ARM64 for an ARM device.</p>
           <div class="choices compact-choices">
-            <a class="download-button" href="https://github.com/ssuffian/toddlerkeys/releases/latest/download/Toddler-Keys-Linux-x64.deb">
+            <a class="download-button" href="/api/download?platform=linux-x64">
               <span>Linux x64 DEB</span>
               <small>Most Intel and AMD computers</small>
             </a>
-            <a class="download-button" href="https://github.com/ssuffian/toddlerkeys/releases/latest/download/Toddler-Keys-Linux-arm64.deb">
+            <a class="download-button" href="/api/download?platform=linux-arm64">
               <span>Linux ARM64 DEB</span>
               <small>ARM laptops and compatible devices</small>
             </a>

@@ -6,14 +6,29 @@ Licensed under the [GNU General Public License v3.0](LICENSE).
 
 Letters, numbers, and symbols create colorful play scenes. A recent-key row reinforces letter and number sequences, and parents can choose musical tones or spoken key names. Modifier and other control keys are ignored during play.
 
-Choose **Spell a word** to build a short word one letter at a time. A picture clue appears from the start, and the on-screen keyboard highlights the next letter after five seconds. Each correct letter gets a small celebration and is spoken aloud, even when a wrong guess follows immediately. Wrong guesses are spoken aloud without losing progress. Press Space to repeat the current instruction (or the last spoken key in Free play). Completing the word reveals a bigger picture, fireworks, and spoken congratulations before the next word. Prompts follow the Sound and Volume settings.
+Choose **Spell a word** to build a short word one letter at a time. A picture clue appears from the start, and the on-screen keyboard highlights the next letter after five seconds. Each correct letter gets a cheerful rising chime, a bouncing tile, and a small confetti burst, and is spoken aloud even when a wrong guess follows immediately. Celebrations can overlap during fast typing. Wrong guesses are spoken aloud without losing progress. Press Space to repeat the current instruction (or the last spoken key in Free play). Completing the word reveals a bigger picture, fireworks, and spoken congratulations before the next word. Prompts and chimes follow the Sound and Volume settings; reduced motion keeps the tile glow and stars without bouncing or flying confetti.
 
 New users start in **Free play**, with spoken keys at 100% volume, Soft Synth selected for musical tones, mixed pictures, lockdown enabled, and the exit reminder visible. Reduced motion follows the device preference. Saved preferences take priority.
 
 ## Ways to play
 
 - **Web/PWA:** [play at toddlerkeys.vercel.app](https://toddlerkeys.vercel.app), with installable best-effort fullscreen behavior.
-- **Desktop apps:** [choose the right Mac or Linux install](https://toddlerkeys.vercel.app/download/). The macOS builds are signed and notarized by Apple, and Linux installs can update through APT.
+- **Desktop apps:** [choose the right Mac or Linux install](https://toddlerkeys.vercel.app/download/). The macOS builds are signed and notarized by Apple, Mac installs can update through Homebrew, and Linux installs can update through APT.
+
+## Install and update on Mac
+
+```sh
+brew install --cask ssuffian/tap/toddlerkeys
+```
+
+Open **Toddler Keys** from Applications. To update, quit the app and run:
+
+```sh
+brew update
+brew upgrade --cask toddlerkeys
+```
+
+Homebrew updates are applied when you run these commands. DMG installations can be updated by replacing the app in Applications with the newer download.
 
 ## Development
 

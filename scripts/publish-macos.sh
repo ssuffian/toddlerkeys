@@ -78,4 +78,8 @@ else
   gh release create "$tag" "${artifacts[@]}" --repo "$repo" --generate-notes --title "Toddler Keys ${tag}"
 fi
 
+# Keep Homebrew on the newest complete signed Mac release. This step is
+# independently retryable with npm run publish:brew if the tap update fails.
+node scripts/publish-homebrew.mjs
+
 print "Published ${tag} at https://github.com/${repo}/releases"

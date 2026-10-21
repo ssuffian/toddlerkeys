@@ -36,6 +36,7 @@ export class ToneScheduler {
 
 export interface Sound {
   accept(key: PlayKey): void;
+  celebrate(): void;
   say(text: string, preserve?: boolean): void;
   repeat(): void;
   configure(settings: Settings): void;
@@ -102,6 +103,7 @@ export function createSound(nativeSpeech?: NativeSpeech): Sound {
   let settings: Settings = defaultSettings();
   let scheduler = new ToneScheduler();
   const voices = new Set<OscillatorNode>();
+  let chime: OscillatorNode | undefined;
   const gate = new SpeechGate();
   // Chromium may drop utterance events when the object is garbage collected.
   let current: SpeechSynthesisUtterance | undefined;
@@ -114,6 +116,7 @@ export function createSound(nativeSpeech?: NativeSpeech): Sound {
   const stopVoices = () => {
     for (const voice of voices) { try { voice.stop(); } catch { /* already stopped */ } }
     voices.clear();
+    chime = undefined;
   };
   const stopSpeech = () => {
     speechGeneration++;
@@ -169,7 +172,7 @@ export function createSound(nativeSpeech?: NativeSpeech): Sound {
     async unlock() {
       if (!settings.sound) return;
       scheduler.start();
-      if (settings.audioMode === 'speech') return;
+      if (settings.audioMode === 'speech' && settings.playMode !== 'find') return;
       try {
         const audio = ensureContext();
         if (audio.state === 'suspended') await audio.resume();
@@ -198,6 +201,35 @@ export function createSound(nativeSpeech?: NativeSpeech): Sound {
         oscillator.start(start);
         oscillator.stop(start + tone.duration);
       } catch { /* unsupported or unavailable audio continues silently */ }
+    },
+    celebrate() {
+      if (!settings.sound || settings.volume <= 0) return;
+      try {
+        const audio = ensureContext();
+        if (audio.state !== 'running') return;
+        // A fresh success replaces the previous chime rather than stacking volume.
+        if (chime) { chime.stop(); voices.delete(chime); }
+        const oscillator = audio.createOscillator();
+        const gain = audio.createGain();
+        const start = audio.currentTime;
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(659.25, start);
+        oscillator.frequency.setValueAtTime(880, start + .09);
+        oscillator.frequency.setValueAtTime(1046.5, start + .18);
+        gain.gain.setValueAtTime(.0001, start);
+        gain.gain.exponentialRampToValueAtTime(settings.volume * .10, start + .012);
+        gain.gain.exponentialRampToValueAtTime(.0001, start + .38);
+        oscillator.connect(gain).connect(audio.destination);
+        chime = oscillator;
+        voices.add(oscillator);
+        oscillator.addEventListener('ended', () => {
+          voices.delete(oscillator);
+          if (chime === oscillator) chime = undefined;
+          oscillator.disconnect(); gain.disconnect();
+        }, { once: true });
+        oscillator.start(start);
+        oscillator.stop(start + .4);
+      } catch { /* celebration remains visual if audio is unavailable */ }
     },
     say,
     repeat() { say(lastText); },
