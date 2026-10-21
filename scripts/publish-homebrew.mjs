@@ -29,7 +29,7 @@ export function renderCask(release) {
   desc "Offline keyboard play space for young children"
   homepage "https://toddlerkeys.vercel.app/"
 
-  depends_on macos: ">= :ventura"
+  depends_on macos: :ventura
 
   app "Toddler Keys.app"
 end
